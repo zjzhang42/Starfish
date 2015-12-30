@@ -5,7 +5,6 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>Spectrum &mdash; Starfish 0.1 documentation</title>
@@ -15,6 +14,7 @@
   
 
   
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 
   
   
@@ -48,7 +48,7 @@
 
 
   
-  <script src="_static/js/modernizr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 
 </head>
 
@@ -60,14 +60,8 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-nav-search">
         
-
+          <a href="index.html" class="fa fa-home"> Starfish</a>
         
-          <a href="index.html" class="icon icon-home"> Starfish
-        
-
-        
-        </a>
-
         
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -76,8 +70,6 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-        
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
@@ -96,20 +88,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="grid_tools.html">Grid Tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#downloading-model-spectra">Downloading model spectra</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#raw-grid-interfaces">Raw Grid Interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#creating-your-own-interface">Creating your own interface</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#examples">Examples</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#raw-grid-interfaces">Raw Grid Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#interpolators">Interpolators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#instruments">Instruments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#utility-functions">Utility Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#wavelength-conversions">Wavelength conversions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#utility-functions">Utility Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#exceptions">Exceptions</a></li>
 </ul>
 </li>
@@ -130,20 +113,52 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfcat-py">hdfcat.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfplot-py">hdfplot.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfinterplot-py">hdfinterplot.py</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#plotly-model-py">plotly_model.py</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cookbook.html">Cookbook</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cookbook.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14.html">Example: WASP 14</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#just-getting-set-up">Just getting set up.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#generating-the-eigenspectra-and-their-weights">Generating the eigenspectra and their weights</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_data.html">Example: WASP 14 Data Munging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#set-up-the-calibration-parameters">Set up the calibration parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#spot-check-your-data-and-model-parameters">Spot check your data and model parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_sampling.html">Example: WASP 14 Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#optimize">Optimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#setting-up-an-mcmc-run">Setting up an MCMC run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#running-mcmc">Running MCMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#sample-with-the-covariance-kernels">Sample with the covariance kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#generate-local-kernels">Generate local kernels</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_multi.html">Example: WASP 14 Multiple Orders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#getting-set-up">Getting set up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#only-spot-check-the-last-order"># Only spot check the last order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#mcmc"># MCMC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#problems-generating-model-bad-wavelength-range">Problems generating model: Bad wavelength range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#nonetype-and-parameters-out-of-range">NoneType and parameters out of range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#fix-c0-is-incorrectly-disabled"><cite>fix_c0</cite> is incorrectly disabled</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips_and_tricks.html">Tips and Tricks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#time-how-long-it-takes-your-script-to-run">Time how long it takes your script to run.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#tuning-the-mcmc-jump-sizes">Tuning the MCMC jump sizes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#how-many-cpus-do-you-have">How many CPUs do you have.</a></li>
 </ul>
 </li>
 </ul>
@@ -173,9 +188,7 @@
     <li>Spectrum</li>
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="_sources/spectrum.txt" rel="nofollow"> View page source</a>
-          
+          <a href="_sources/spectrum.txt" rel="nofollow"> View page source</a>
         
       </li>
   </ul>
@@ -206,11 +219,128 @@
 <p>Many spectral routines utilize a keyword <code class="docutils literal"><span class="pre">dv</span></code>, which stands for <span class="math">\(\Delta v\)</span>, or the velocity difference (measured in km/s) that corresponds to the width of one pixel.</p>
 <div class="math">
 \[\textrm{dv} = c \frac{\Delta \lambda}{\lambda}\]</div>
-<p>When resampling wavelength grids that are not log-lambda spaced (e.g., the raw synthetic spectrum from the library) onto a log-lambda grid, the <code class="docutils literal"><span class="pre">dv</span></code> must be calculated. Generally, <code class="xref py py-meth docutils literal"><span class="pre">calculate_dv()</span></code> works by measuring the velocity difference of every pixel and choosing the smallest, that way no spectral information will be lost.</p>
+<p>When resampling wavelength grids that are not log-lambda spaced (e.g., the raw synthetic spectrum from the library) onto a log-lambda grid, the <code class="docutils literal"><span class="pre">dv</span></code> must be calculated. Generally, <a class="reference internal" href="#Starfish.spectrum.calculate_dv" title="Starfish.spectrum.calculate_dv"><code class="xref py py-meth docutils literal"><span class="pre">calculate_dv()</span></code></a> works by measuring the velocity difference of every pixel and choosing the smallest, that way no spectral information will be lost.</p>
+<dl class="function">
+<dt id="Starfish.spectrum.calculate_dv">
+<code class="descclassname">Starfish.spectrum.</code><code class="descname">calculate_dv</code><span class="sig-paren">(</span><em>wl</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#calculate_dv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.calculate_dv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a wavelength array, calculate the minimum <code class="docutils literal"><span class="pre">dv</span></code> of the array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wl</strong> (<em>np.array</em>) &#8211; wavelength array</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(float) delta-v in units of km/s</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="Starfish.spectrum.create_log_lam_grid">
+<code class="descclassname">Starfish.spectrum.</code><code class="descname">create_log_lam_grid</code><span class="sig-paren">(</span><em>dv</em>, <em>wl_start=3000.0</em>, <em>wl_end=13000.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#create_log_lam_grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.create_log_lam_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a log lambda spaced grid with <code class="docutils literal"><span class="pre">N_points</span></code> equal to a power of 2 for
+ease of FFT.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wl_start</strong> (<em>float, AA</em>) &#8211; starting wavelength (inclusive)</li>
+<li><strong>wl_end</strong> (<em>float, AA</em>) &#8211; ending wavelength (inclusive)</li>
+<li><strong>dv</strong> (<em>float</em>) &#8211; upper bound on the size of the velocity spacing (in km/s)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">a wavelength dictionary containing the specified properties. Note
+that the returned dv will be &lt;= specified dv.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="grid_tools.html#Starfish.grid_tools.Instrument.self.wl_dict" title="Starfish.grid_tools.Instrument.self.wl_dict">wl_dict</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 <div class="section" id="data-spectrum">
 <h2>Data Spectrum<a class="headerlink" href="#data-spectrum" title="Permalink to this headline">¶</a></h2>
-<p>The <code class="xref py py-obj docutils literal"><span class="pre">DataSpectrum</span></code> holds the data spectrum that you wish to fit. You may read your data into this object in a few ways. First let&#8217;s introduce the object and then discuss the reading methods.</p>
+<p>The <a class="reference internal" href="#Starfish.spectrum.DataSpectrum" title="Starfish.spectrum.DataSpectrum"><code class="xref py py-obj docutils literal"><span class="pre">DataSpectrum</span></code></a> holds the data spectrum that you wish to fit. You may read your data into this object in a few ways. First let&#8217;s introduce the object and then discuss the reading methods.</p>
+<dl class="class">
+<dt id="Starfish.spectrum.DataSpectrum">
+<em class="property">class </em><code class="descclassname">Starfish.spectrum.</code><code class="descname">DataSpectrum</code><span class="sig-paren">(</span><em>wls</em>, <em>fls</em>, <em>sigmas</em>, <em>masks=None</em>, <em>orders='all'</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#DataSpectrum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.DataSpectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object to manipulate the data spectrum.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>wls</strong> (<em>1D or 2D np.array</em>) &#8211; wavelength (in AA)</li>
+<li><strong>fls</strong> (<em>1D or 2D np.array</em>) &#8211; flux (in f_lam)</li>
+<li><strong>sigmas</strong> (<em>1D or 2D np.array</em>) &#8211; Poisson noise (in f_lam)</li>
+<li><strong>masks</strong> (<em>1D or 2D np.array of boolean values</em>) &#8211; Mask to blot out bad pixels or emission regions.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If the wl, fl, are provided as 1D arrays (say for a single order), they will be converted to 2D arrays with length 1
+in the 0-axis.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For now, the DataSpectrum wls, fls, sigmas, and masks must be a rectangular grid. No ragged Echelle orders allowed.</p>
+</div>
+<dl class="method">
+<dt id="Starfish.spectrum.DataSpectrum.add_mask">
+<code class="descname">add_mask</code><span class="sig-paren">(</span><em>new_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#DataSpectrum.add_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.DataSpectrum.add_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a mask with the same self.shape, update self.masks to include the union with this new mask.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="Starfish.spectrum.DataSpectrum.open">
+<em class="property">classmethod </em><code class="descname">open</code><span class="sig-paren">(</span><em>file</em>, <em>orders='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#DataSpectrum.open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.DataSpectrum.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a spectrum from a directory link pointing to HDF5 output from EchelleTools processing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>base_file</strong> (<em>string</em>) &#8211; HDF5 file containing files on disk.</li>
+<li><strong>orders</strong> (<em>np.array of indexes</em>) &#8211; Which orders should we be fitting?</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataSpectrum</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="Starfish.spectrum.DataSpectrum.open_npy">
+<em class="property">classmethod </em><code class="descname">open_npy</code><span class="sig-paren">(</span><em>base_file</em>, <em>orders='all'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/spectrum.html#DataSpectrum.open_npy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.spectrum.DataSpectrum.open_npy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a spectrum from a directory link pointing to .npy output from EchelleTools processing.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>base_file</strong> (<em>string</em>) &#8211; base path name to be appended with &#8221;.wls.npy&#8221;, &#8221;.fls.npy&#8221;, &#8221;.sigmas.npy&#8221;, and &#8221;.masks.npy&#8221; to load files from disk.</li>
+<li><strong>orders</strong> (<em>np.array of indexes</em>) &#8211; Which orders should we be fitting?</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">DataSpectrum</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <p>First, you can construct an instance using the traditional <code class="docutils literal"><span class="pre">__init__</span></code> method:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># Read wls, fls, and sigmas from your dataset</span>
 <span class="c"># as numpy arrays using your own method.</span>
@@ -252,10 +382,10 @@ sigmas
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="emulator.html" class="btn btn-neutral float-right" title="Spectral Emulator" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="emulator.html" class="btn btn-neutral float-right" title="Spectral Emulator">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="grid_tools.html" class="btn btn-neutral" title="Grid Tools" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="grid_tools.html" class="btn btn-neutral" title="Grid Tools"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -264,13 +394,13 @@ sigmas
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013-14, Ian Czekala.
+        &copy; Copyright 2013-15, Ian Czekala.
     </p>
   </div>
+
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+  
 </footer>
-
         </div>
       </div>
 

@@ -5,7 +5,6 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>Grid Tools &mdash; Starfish 0.1 documentation</title>
@@ -15,6 +14,7 @@
   
 
   
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 
   
   
@@ -48,7 +48,7 @@
 
 
   
-  <script src="_static/js/modernizr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 
 </head>
 
@@ -60,14 +60,8 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-nav-search">
         
-
+          <a href="index.html" class="fa fa-home"> Starfish</a>
         
-          <a href="index.html" class="icon icon-home"> Starfish
-        
-
-        
-        </a>
-
         
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -76,8 +70,6 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-        
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
@@ -96,20 +88,11 @@
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Grid Tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#downloading-model-spectra">Downloading model spectra</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#raw-grid-interfaces">Raw Grid Interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#creating-your-own-interface">Creating your own interface</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#raw-grid-interfaces">Raw Grid Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#interpolators">Interpolators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#instruments">Instruments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#utility-functions">Utility Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#wavelength-conversions">Wavelength conversions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#utility-functions">Utility Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#exceptions">Exceptions</a></li>
 </ul>
 </li>
@@ -130,20 +113,52 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfcat-py">hdfcat.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfplot-py">hdfplot.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfinterplot-py">hdfinterplot.py</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#plotly-model-py">plotly_model.py</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cookbook.html">Cookbook</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cookbook.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14.html">Example: WASP 14</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#just-getting-set-up">Just getting set up.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#generating-the-eigenspectra-and-their-weights">Generating the eigenspectra and their weights</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_data.html">Example: WASP 14 Data Munging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#set-up-the-calibration-parameters">Set up the calibration parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#spot-check-your-data-and-model-parameters">Spot check your data and model parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_sampling.html">Example: WASP 14 Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#optimize">Optimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#setting-up-an-mcmc-run">Setting up an MCMC run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#running-mcmc">Running MCMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#sample-with-the-covariance-kernels">Sample with the covariance kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#generate-local-kernels">Generate local kernels</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_multi.html">Example: WASP 14 Multiple Orders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#getting-set-up">Getting set up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#only-spot-check-the-last-order"># Only spot check the last order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#mcmc"># MCMC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#problems-generating-model-bad-wavelength-range">Problems generating model: Bad wavelength range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#nonetype-and-parameters-out-of-range">NoneType and parameters out of range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#fix-c0-is-incorrectly-disabled"><cite>fix_c0</cite> is incorrectly disabled</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips_and_tricks.html">Tips and Tricks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#time-how-long-it-takes-your-script-to-run">Time how long it takes your script to run.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#tuning-the-mcmc-jump-sizes">Tuning the MCMC jump sizes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#how-many-cpus-do-you-have">How many CPUs do you have.</a></li>
 </ul>
 </li>
 </ul>
@@ -173,9 +188,7 @@
     <li>Grid Tools</li>
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="_sources/grid_tools.txt" rel="nofollow"> View page source</a>
-          
+          <a href="_sources/grid_tools.txt" rel="nofollow"> View page source</a>
         
       </li>
   </ul>
@@ -201,7 +214,7 @@
 </li>
 </ul>
 </div>
-<p>It defines many useful functions and objects that may be used in the modeling package <code class="xref py py-mod docutils literal"><span class="pre">model</span></code>, such as <code class="xref py py-obj docutils literal"><span class="pre">Interpolator</span></code>.</p>
+<p>It defines many useful functions and objects that may be used in the modeling package <code class="xref py py-mod docutils literal"><span class="pre">model</span></code>, such as <a class="reference internal" href="#Starfish.grid_tools.Interpolator" title="Starfish.grid_tools.Interpolator"><code class="xref py py-obj docutils literal"><span class="pre">Interpolator</span></code></a>.</p>
 <div class="section" id="downloading-model-spectra">
 <h2><a class="toc-backref" href="#id2">Downloading model spectra</a><a class="headerlink" href="#downloading-model-spectra" title="Permalink to this headline">¶</a></h2>
 <p>Before you may begin any fitting, you must acquire a synthetic library of model spectra. If you will be fitting spectra of stars, there are many high quality synthetic and empirical spectral libraries available. In our paper, we use the freely available PHOENIX library synthesized by T.O. Husser. The library is available for download here: <a class="reference external" href="http://phoenix.astro.physik.uni-goettingen.de/">http://phoenix.astro.physik.uni-goettingen.de/</a></p>
@@ -229,7 +242,7 @@
 </div>
 <div class="section" id="raw-grid-interfaces">
 <span id="grid-reference-label"></span><h2><a class="toc-backref" href="#id3">Raw Grid Interfaces</a><a class="headerlink" href="#raw-grid-interfaces" title="Permalink to this headline">¶</a></h2>
-<p><em>Grid interfaces</em> are classes designed to abstract the interaction with the raw synthetic stellar libraries under a common interface. The <code class="xref py py-obj docutils literal"><span class="pre">RawGridInterface</span></code> class is designed to be extended by the user to provide access to any new grids. Currently there are extensions for three main grids:</p>
+<p><em>Grid interfaces</em> are classes designed to abstract the interaction with the raw synthetic stellar libraries under a common interface. The <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-obj docutils literal"><span class="pre">RawGridInterface</span></code></a> class is designed to be extended by the user to provide access to any new grids. Currently there are extensions for three main grids:</p>
 <blockquote>
 <div><ol class="arabic simple">
 <li><a class="reference external" href="http://phoenix.astro.physik.uni-goettingen.de/">PHOENIX spectra</a> by T.O. Husser et al 2013</li>
@@ -238,11 +251,129 @@
 </ol>
 </div></blockquote>
 <p>There are two interfaces provided to the PHOENIX/Husser grid: one that includes alpha enhancement and another which restricts access to 0 alpha enhancement.</p>
+<p class="graphviz">
+digraph inheritance81448a7240 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;BTSettlGridInterface&quot; [URL=&quot;#Starfish.grid_tools.BTSettlGridInterface&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;BTSettl grid interface. Unlike the PHOENIX and Kurucz grids, the&quot;];
+  &quot;RawGridInterface&quot; -&gt; &quot;BTSettlGridInterface&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;KuruczGridInterface&quot; [URL=&quot;#Starfish.grid_tools.KuruczGridInterface&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;Kurucz grid interface.&quot;];
+  &quot;RawGridInterface&quot; -&gt; &quot;KuruczGridInterface&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;PHOENIXGridInterface&quot; [URL=&quot;#Starfish.grid_tools.PHOENIXGridInterface&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;An Interface to the PHOENIX/Husser synthetic library.&quot;];
+  &quot;RawGridInterface&quot; -&gt; &quot;PHOENIXGridInterface&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;RawGridInterface&quot; [URL=&quot;#Starfish.grid_tools.RawGridInterface&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;A base class to handle interfacing with synthetic spectral libraries.&quot;];
+}
+</p>
 <p>Here and throughout the code, stellar spectra are referenced by a numpy array of parameter values, which corresponds to the parameters listed in the config file.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">my_params</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">6000</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
 </pre></div>
 </div>
-<p>Here we introduce the classes and their methods. Below is an example of how you might use the <code class="xref py py-obj docutils literal"><span class="pre">PHOENIXGridInterface</span></code>.</p>
+<p>Here we introduce the classes and their methods. Below is an example of how you might use the <a class="reference internal" href="#Starfish.grid_tools.PHOENIXGridInterface" title="Starfish.grid_tools.PHOENIXGridInterface"><code class="xref py py-obj docutils literal"><span class="pre">PHOENIXGridInterface</span></code></a>.</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.RawGridInterface">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">RawGridInterface</code><span class="sig-paren">(</span><em>name, param_names, points, air=True, wl_range=[3000, 13000], base=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#RawGridInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.RawGridInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>A base class to handle interfacing with synthetic spectral libraries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>string</em>) &#8211; name of the spectral library</li>
+<li><strong>param_names</strong> (<em>list</em>) &#8211; the names of the parameters (dimensions) of the grid</li>
+<li><strong>points</strong> (<em>list of numpy arrays</em>) &#8211; the grid points at which
+spectra exist (assumes grid is square, not ragged, meaning that every combination
+of parameters specified exists in the grid).</li>
+<li><strong>air</strong> (<em>bool</em>) &#8211; Are the wavelengths measured in air?</li>
+<li><strong>wl_range</strong> (<em>list of len 2 [min, max]</em>) &#8211; the starting and ending wavelength ranges of the grid to
+truncate to.</li>
+<li><strong>base</strong> (<em>string</em>) &#8211; path to the root of the files on disk.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="Starfish.grid_tools.RawGridInterface.check_params">
+<code class="descname">check_params</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#RawGridInterface.check_params"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.RawGridInterface.check_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the specified parameters are allowed in the grid.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>np.array</em>) &#8211; parameter set to check</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises C.GridError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if the parameter values are outside of the grid bounds</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.RawGridInterface.load_flux">
+<code class="descname">load_flux</code><span class="sig-paren">(</span><em>parameters</em>, <em>norm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#RawGridInterface.load_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.RawGridInterface.load_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the synthetic flux from the disk and  <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface.check_params" title="Starfish.grid_tools.RawGridInterface.check_params"><code class="xref py py-meth docutils literal"><span class="pre">check_params()</span></code></a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> &#8211; stellar parameters describing a spectrum</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Starfish.grid_tools.PHOENIXGridInterface">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">PHOENIXGridInterface</code><span class="sig-paren">(</span><em>air=True, norm=True, wl_range=[3000, 54000], base='libraries/raw/PHOENIX/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#PHOENIXGridInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.PHOENIXGridInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.RawGridInterface</span></code></a></p>
+<p>An Interface to the PHOENIX/Husser synthetic library.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>norm</strong> (<em>bool</em>) &#8211; normalize the spectrum to solar luminosity?</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="Starfish.grid_tools.PHOENIXGridInterface.load_flux">
+<code class="descname">load_flux</code><span class="sig-paren">(</span><em>parameters</em>, <em>norm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#PHOENIXGridInterface.load_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.PHOENIXGridInterface.load_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load just the flux and header information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>np.array</em>) &#8211; stellar parameters</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises C.GridError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if the file cannot be found on disk.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">tuple (flux_array, header_dict)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Starfish.grid_tools.PHOENIXGridInterfaceNoAlpha">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">PHOENIXGridInterfaceNoAlpha</code><span class="sig-paren">(</span><em>air=True, norm=True, wl_range=[3000, 54000], base='libraries/raw/PHOENIX/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#PHOENIXGridInterfaceNoAlpha"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.PHOENIXGridInterfaceNoAlpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.PHOENIXGridInterface" title="Starfish.grid_tools.PHOENIXGridInterface"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.PHOENIXGridInterface</span></code></a></p>
+<p>An Interface to the PHOENIX/Husser synthetic library.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>norm</strong> (<em>bool</em>) &#8211; normalize the spectrum to solar luminosity?</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <p>In order to load a raw file from the PHOENIX grid, one would do</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># if you downloaded the libraries elsewhere, be sure to include base=&quot;mydir&quot;</span>
 <span class="kn">import</span> <span class="nn">Starfish</span>
@@ -283,9 +414,58 @@
         <span class="mf">53999.27587687</span><span class="p">,</span>  <span class="mf">53999.52580875</span><span class="p">,</span>  <span class="mf">53999.77574063</span><span class="p">])</span>
 </pre></div>
 </div>
+<dl class="class">
+<dt id="Starfish.grid_tools.KuruczGridInterface">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">KuruczGridInterface</code><span class="sig-paren">(</span><em>air=True, norm=True, wl_range=[5000, 5400], base='libraries/raw/PHOENIX/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#KuruczGridInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.KuruczGridInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.RawGridInterface</span></code></a></p>
+<p>Kurucz grid interface.</p>
+<p>Spectra are stored in <code class="docutils literal"><span class="pre">f_nu</span></code> in a filename like
+<code class="docutils literal"><span class="pre">t03500g00m25ap00k2v070z1i00.fits</span></code>, <code class="docutils literal"><span class="pre">ap00</span></code> means zero alpha enhancement,
+and <code class="docutils literal"><span class="pre">k2</span></code> is the microturbulence, while <code class="docutils literal"><span class="pre">z1</span></code> is the macroturbulence.
+These particular values are roughly the ones appropriate for the Sun.</p>
+<dl class="method">
+<dt id="Starfish.grid_tools.KuruczGridInterface.load_flux">
+<code class="descname">load_flux</code><span class="sig-paren">(</span><em>parameters</em>, <em>norm=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#KuruczGridInterface.load_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.KuruczGridInterface.load_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a the flux and header information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>dict</em>) &#8211; stellar parameters</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises C.GridError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if the file cannot be found on disk.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">tuple (flux_array, header_dict)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="Starfish.grid_tools.BTSettlGridInterface">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">BTSettlGridInterface</code><span class="sig-paren">(</span><em>air=True, norm=True, wl_range=[2999, 13000], base='libraries/raw/BTSettl/'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#BTSettlGridInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.BTSettlGridInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.RawGridInterface</span></code></a></p>
+<p>BTSettl grid interface. Unlike the PHOENIX and Kurucz grids, the
+individual files of the BTSettl grid do not always have the same wavelength
+sampling. Therefore, each call of <a class="reference internal" href="#Starfish.grid_tools.BTSettlGridInterface.load_flux" title="Starfish.grid_tools.BTSettlGridInterface.load_flux"><code class="xref py py-meth docutils literal"><span class="pre">load_flux()</span></code></a> will interpolate the
+flux onto a LogLambda spaced grid that ranges between <cite>wl_range</cite> and has a
+velocity spacing of 0.08 km/s or better.</p>
+<p>If you have a choice, it&#8217;s probably easier to use the Husser PHOENIX grid.</p>
+<dl class="method">
+<dt id="Starfish.grid_tools.BTSettlGridInterface.load_flux">
+<code class="descname">load_flux</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#BTSettlGridInterface.load_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.BTSettlGridInterface.load_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Because of the crazy format of the BTSettl, we need to sort the wl to make sure
+everything is unique, and we&#8217;re not screwing ourselves with the spline.</p>
+</dd></dl>
+
+</dd></dl>
+
 <div class="section" id="creating-your-own-interface">
 <h3>Creating your own interface<a class="headerlink" href="#creating-your-own-interface" title="Permalink to this headline">¶</a></h3>
-<p>The <code class="xref py py-obj docutils literal"><span class="pre">RawGridInterface</span></code> and subclasses exist solely to interface with the raw files on disk. At minimum, they should each define a <code class="xref py py-meth docutils literal"><span class="pre">load_flux()</span></code> , which takes in a dictionary of parameters and returns a flux array and a dictionary of whatever information may be contained in the file header.</p>
+<p>The <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-obj docutils literal"><span class="pre">RawGridInterface</span></code></a> and subclasses exist solely to interface with the raw files on disk. At minimum, they should each define a <code class="xref py py-meth docutils literal"><span class="pre">load_flux()</span></code> , which takes in a dictionary of parameters and returns a flux array and a dictionary of whatever information may be contained in the file header.</p>
 <p>Under the hood, each of these is implemented differently depending on how the synthetic grid is created. In the case of the BTSettl grid, each file in the grid may actually have a flux array that has been sampled at separate wavelengths. Therefore, it is necessary to actually interpolate each spectrum to a new, common grid, since the wavelength axis of each spectrum is not always the same. Depending on your spectral library, you may need to do something similar.</p>
 </div>
 </div>
@@ -298,8 +478,51 @@
 <li>Use only the part of the spectrum that overlaps your instrument&#8217;s wavelength coverage. For example, if the range of our spectrograph is 4000 - 9000 angstroms, it makes sense to discard the UV and IR portions of the synthetic spectrum.</li>
 <li>Resample the high resolution spectra to a lower resolution more suitably matched to the resolution of your spectrograph. For example, PHOENIX spectra are provided at <span class="math">\(R \sim 500,000\)</span>, while the TRES spectrograph has a resolution of <span class="math">\(R \sim 44,000\)</span>.</li>
 </ol>
-<p>All of these reductions can be achieved using the <code class="xref py py-obj docutils literal"><span class="pre">HDF5Creator</span></code> object.</p>
-<p>Here is an example using the <code class="xref py py-obj docutils literal"><span class="pre">HDF5Creator</span></code> to transform the raw spectral library into an HDF5 file with spectra that have the resolution of the <em>TRES</em> instrument.</p>
+<p>All of these reductions can be achieved using the <a class="reference internal" href="#Starfish.grid_tools.HDF5Creator" title="Starfish.grid_tools.HDF5Creator"><code class="xref py py-obj docutils literal"><span class="pre">HDF5Creator</span></code></a> object.</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.HDF5Creator">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">HDF5Creator</code><span class="sig-paren">(</span><em>GridInterface</em>, <em>filename</em>, <em>Instrument</em>, <em>ranges=None</em>, <em>key_name='t{0:.0f}g{1:.1f}z{2:.1f}'</em>, <em>vsinis=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Creator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Creator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a HDF5 grid to store all of the spectra from a RawGridInterface,
+along with metadata.</p>
+<dl class="method">
+<dt id="Starfish.grid_tools.HDF5Creator.process_flux">
+<code class="descname">process_flux</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Creator.process_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Creator.process_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a flux file from the raw grid, process it according to the
+instrument, and insert it into the HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>1D np.array</em>) &#8211; the model parameters.</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises AssertionError:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">if the <cite>parameters</cite> vector is not
+the same length as that of the raw grid.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">a tuple of (parameters, flux, header). If the flux could
+not be loaded, returns (None, None, None).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.HDF5Creator.process_grid">
+<code class="descname">process_grid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Creator.process_grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Creator.process_grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run <a class="reference internal" href="#Starfish.grid_tools.HDF5Creator.process_flux" title="Starfish.grid_tools.HDF5Creator.process_flux"><code class="xref py py-meth docutils literal"><span class="pre">process_flux()</span></code></a> for all of the spectra within the <cite>ranges</cite>
+and store the processed spectra in the HDF5 file.</p>
+<p>Only executed in serial for now.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p>Here is an example using the <a class="reference internal" href="#Starfish.grid_tools.HDF5Creator" title="Starfish.grid_tools.HDF5Creator"><code class="xref py py-obj docutils literal"><span class="pre">HDF5Creator</span></code></a> to transform the raw spectral library into an HDF5 file with spectra that have the resolution of the <em>TRES</em> instrument.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">Starfish</span>
 <span class="kn">from</span> <span class="nn">Starfish.grid_tools</span> <span class="kn">import</span> <span class="n">PHOENIXGridInterfaceNoAlpha</span> <span class="k">as</span> <span class="n">PHOENIX</span>
 <span class="kn">from</span> <span class="nn">Starfish.grid_tools</span> <span class="kn">import</span> <span class="n">HDF5Creator</span><span class="p">,</span> <span class="n">TRES</span>
@@ -314,7 +537,45 @@
 <span class="n">creator</span><span class="o">.</span><span class="n">process_grid</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Once you&#8217;ve made a grid, then you&#8217;ll want to interface with it via <code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code>. The <code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code> provides <cite>load_file</cite>  similar to that of the raw grid interfaces. It does not make any assumptions about how what resolution the spectra are stored, other than that the all spectra within the same HDF5 file share the same wavelength grid, which is stored in the HDF5 file as &#8216;wl&#8217;. The flux files are stored within the HDF5 file, in a subfile called &#8216;flux&#8217;.</p>
+<p>Once you&#8217;ve made a grid, then you&#8217;ll want to interface with it via <a class="reference internal" href="#Starfish.grid_tools.HDF5Interface" title="Starfish.grid_tools.HDF5Interface"><code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code></a>. The <a class="reference internal" href="#Starfish.grid_tools.HDF5Interface" title="Starfish.grid_tools.HDF5Interface"><code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code></a> provides <cite>load_file</cite>  similar to that of the raw grid interfaces. It does not make any assumptions about how what resolution the spectra are stored, other than that the all spectra within the same HDF5 file share the same wavelength grid, which is stored in the HDF5 file as &#8216;wl&#8217;. The flux files are stored within the HDF5 file, in a subfile called &#8216;flux&#8217;.</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.HDF5Interface">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">HDF5Interface</code><span class="sig-paren">(</span><em>filename='libraries/PHOENIX_TRES_test.hdf5'</em>, <em>key_name='t{0:.0f}g{1:.1f}z{2:.1f}'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Interface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to an HDF5 file that stores spectra.</p>
+<dl class="attribute">
+<dt id="Starfish.grid_tools.HDF5Interface.fluxes">
+<code class="descname">fluxes</code><a class="headerlink" href="#Starfish.grid_tools.HDF5Interface.fluxes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterator to loop over all of the spectra stored in the grid, for PCA.</p>
+<p>Loops over parameters in the order specified by grid_points.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.HDF5Interface.load_flux">
+<code class="descname">load_flux</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Interface.load_flux"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Interface.load_flux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load just the flux from the grid, with possibly an index truncation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>np.array</em>) &#8211; the stellar parameters</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises KeyError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if spectrum is not found in the HDF5 file.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">flux array</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.HDF5Interface.load_flux_hdr">
+<code class="descname">load_flux_hdr</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#HDF5Interface.load_flux_hdr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.HDF5Interface.load_flux_hdr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Just like load_flux, but also returns the header</p>
+</dd></dl>
+
+</dd></dl>
+
 <div class="section" id="examples">
 <h3>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
 <p>For example, to load a file from our recently-created HDF5 grid</p>
@@ -336,6 +597,59 @@
 <h2><a class="toc-backref" href="#id5">Interpolators</a><a class="headerlink" href="#interpolators" title="Permalink to this headline">¶</a></h2>
 <p>The interpolators are used to create spectra in between grid points, for example
 <code class="docutils literal"><span class="pre">myParams</span> <span class="pre">=</span> <span class="pre">{&quot;temp&quot;:6114,</span> <span class="pre">&quot;logg&quot;:4.34,</span> <span class="pre">&quot;Z&quot;:</span> <span class="pre">0.12,</span> <span class="pre">&quot;alpha&quot;:0.1}</span></code>. Note, this currently broken and will remain so unless there is a good use case. For now, it is recommended to use the <a class="reference internal" href="emulator.html"><em>Spectral Emulator</em></a>.</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.Interpolator">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">Interpolator</code><span class="sig-paren">(</span><em>wl</em>, <em>interface</em>, <em>cache_max=256</em>, <em>cache_dump=64</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Interpolator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Interpolator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Quickly and efficiently interpolate a synthetic spectrum for use in an MCMC
+simulation. Caches spectra for easier memory load.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interface</strong> &#8211; <a class="reference internal" href="#Starfish.grid_tools.HDF5Interface" title="Starfish.grid_tools.HDF5Interface"><code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code></a> (recommended) or <a class="reference internal" href="#Starfish.grid_tools.RawGridInterface" title="Starfish.grid_tools.RawGridInterface"><code class="xref py py-obj docutils literal"><span class="pre">RawGridInterface</span></code></a> to load spectra</li>
+<li><strong>wl</strong> &#8211; data wavelength of the region you are trying to fit. Used to truncate the grid for speed.</li>
+<li><strong>cache_max</strong> (<em>int</em>) &#8211; maximum number of spectra to hold in cache</li>
+<li><strong>cache_dump</strong> (<em>int</em>) &#8211; how many spectra to purge from the cache once <code class="xref py py-attr docutils literal"><span class="pre">cache_max</span></code> is reached</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="Starfish.grid_tools.Interpolator.__call__">
+<code class="descname">__call__</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Interpolator.__call__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Interpolator.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a spectrum</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>dict</em>) &#8211; stellar parameters</td>
+</tr>
+</tbody>
+</table>
+<p>Automatically pops <code class="xref py py-attr docutils literal"><span class="pre">cache_dump</span></code> items from cache if full.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.Interpolator.interpolate">
+<code class="descname">interpolate</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Interpolator.interpolate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Interpolator.interpolate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Interpolate a spectrum without clearing cache. Recommended to use <a class="reference internal" href="#Starfish.grid_tools.Interpolator.__call__" title="Starfish.grid_tools.Interpolator.__call__"><code class="xref py py-meth docutils literal"><span class="pre">__call__()</span></code></a> instead.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> (<em>np.array</em>) &#8211; grid parameters</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises C.InterpolationError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if parameters are out of bounds.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <p>For example, if we would like to generate a spectrum with the aforementioned parameters, we would do</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">myInterpolator</span> <span class="o">=</span> <span class="n">Interpolator</span><span class="p">(</span><span class="n">myHDF5</span><span class="p">)</span>
 <span class="n">spec</span> <span class="o">=</span> <span class="n">myInterpolator</span><span class="p">({</span><span class="s">&quot;temp&quot;</span><span class="p">:</span><span class="mi">6114</span><span class="p">,</span> <span class="s">&quot;logg&quot;</span><span class="p">:</span><span class="mf">4.34</span><span class="p">,</span> <span class="s">&quot;Z&quot;</span><span class="p">:</span> <span class="mf">0.12</span><span class="p">,</span> <span class="s">&quot;alpha&quot;</span><span class="p">:</span><span class="mf">0.1</span><span class="p">})</span>
@@ -345,12 +659,182 @@
 <div class="section" id="instruments">
 <h2><a class="toc-backref" href="#id6">Instruments</a><a class="headerlink" href="#instruments" title="Permalink to this headline">¶</a></h2>
 <p>In order to take the theoretical synthetic stellar spectra and make meaningful comparisons to actual data, we need to convolve and resample the synthetic spectra to match the format of our data. <code class="docutils literal"><span class="pre">Instrument</span></code> s are a convenience object which store the relevant characteristics of a given instrument.</p>
+<p class="graphviz">
+digraph inheritance8cb621eb03 {
+rankdir=LR;
+size=&quot;8.0, 12.0&quot;;
+  &quot;Instrument&quot; [URL=&quot;#Starfish.grid_tools.Instrument&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;Object describing an instrument. This will be used by other methods for&quot;];
+  &quot;KPNO&quot; [URL=&quot;#Starfish.grid_tools.KPNO&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;KNPO Instrument&quot;];
+  &quot;Instrument&quot; -&gt; &quot;KPNO&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;Reticon&quot; [URL=&quot;#Starfish.grid_tools.Reticon&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;Reticon Instrument&quot;];
+  &quot;Instrument&quot; -&gt; &quot;Reticon&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+  &quot;TRES&quot; [URL=&quot;#Starfish.grid_tools.TRES&quot;,style=&quot;setlinewidth(0.5)&quot;,fontsize=10,shape=box,fontname=&quot;Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans&quot;,height=0.25,tooltip=&quot;TRES instrument&quot;];
+  &quot;Instrument&quot; -&gt; &quot;TRES&quot; [arrowsize=0.5,style=&quot;setlinewidth(0.5)&quot;];
+}
+</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.Instrument">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">Instrument</code><span class="sig-paren">(</span><em>name</em>, <em>FWHM</em>, <em>wl_range</em>, <em>oversampling=4.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Instrument"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Instrument" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object describing an instrument. This will be used by other methods for
+processing raw synthetic spectra.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>string</em>) &#8211; name of the instrument</li>
+<li><strong>FWHM</strong> (<em>float</em>) &#8211; the FWHM of the instrumental profile in km/s</li>
+<li><strong>wl_range</strong> (<em>2-tuple (low, high)</em>) &#8211; wavelength range of instrument</li>
+<li><strong>oversampling</strong> (<em>float</em>) &#8211; how many samples fit across the <code class="xref py py-attr docutils literal"><span class="pre">FWHM</span></code></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Upon initialization, calculates a <code class="docutils literal"><span class="pre">wl_dict</span></code> with the properties of the
+instrument.</p>
+<dl class="attribute">
+<dt id="Starfish.grid_tools.Instrument.self.wl_dict">
+<code class="descclassname">self.</code><code class="descname">wl_dict</code><a class="headerlink" href="#Starfish.grid_tools.Instrument.self.wl_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="Starfish.grid_tools.Instrument.__str__">
+<code class="descname">__str__</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Instrument.__str__"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Instrument.__str__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints the relevant properties of the instrument.</p>
+</dd></dl>
+
+</dd></dl>
+
 <p>A wl_dict that fits the instrumental properties with the correct oversampling.</p>
+<dl class="class">
+<dt id="Starfish.grid_tools.TRES">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">TRES</code><span class="sig-paren">(</span><em>name='TRES'</em>, <em>FWHM=6.8</em>, <em>wl_range=(3500</em>, <em>9500)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#TRES"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.TRES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.Instrument" title="Starfish.grid_tools.Instrument"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.Instrument</span></code></a></p>
+<p>TRES instrument</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Starfish.grid_tools.KPNO">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">KPNO</code><span class="sig-paren">(</span><em>name='KPNO'</em>, <em>FWHM=14.4</em>, <em>wl_range=(6250</em>, <em>6650)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#KPNO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.KPNO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.Instrument" title="Starfish.grid_tools.Instrument"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.Instrument</span></code></a></p>
+<p>KNPO Instrument</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="Starfish.grid_tools.Reticon">
+<em class="property">class </em><code class="descclassname">Starfish.grid_tools.</code><code class="descname">Reticon</code><span class="sig-paren">(</span><em>name='Reticon'</em>, <em>FWHM=8.5</em>, <em>wl_range=(5145</em>, <em>5250)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#Reticon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.Reticon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#Starfish.grid_tools.Instrument" title="Starfish.grid_tools.Instrument"><code class="xref py py-class docutils literal"><span class="pre">Starfish.grid_tools.Instrument</span></code></a></p>
+<p>Reticon Instrument</p>
+</dd></dl>
+
 </div>
 <div class="section" id="utility-functions">
 <h2><a class="toc-backref" href="#id7">Utility Functions</a><a class="headerlink" href="#utility-functions" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="Starfish.grid_tools.chunk_list">
+<code class="descclassname">Starfish.grid_tools.</code><code class="descname">chunk_list</code><span class="sig-paren">(</span><em>mylist</em>, <em>n=8</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#chunk_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.chunk_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Divide a lengthy parameter list into chunks for parallel processing and
+backfill if necessary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mylist</strong> (<em>1-D list</em>) &#8211; a lengthy list of parameter combinations</li>
+<li><strong>n</strong> (<em>integer</em>) &#8211; number of chunks to divide list into. Default is <code class="docutils literal"><span class="pre">mp.cpu_count()</span></code></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><strong>chunks</strong> (<em>2-D list</em> of shape (n, -1)) a list of chunked parameter lists.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="Starfish.grid_tools.determine_chunk_log">
+<code class="descclassname">Starfish.grid_tools.</code><code class="descname">determine_chunk_log</code><span class="sig-paren">(</span><em>wl</em>, <em>wl_min</em>, <em>wl_max</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#determine_chunk_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.determine_chunk_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take in a wavelength array and then, given two minimum bounds, determine
+the boolean indices that will allow us to truncate this grid to near the
+requested bounds while forcing the wl length to be a power of 2.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>wl</strong> (<em>np.ndarray</em>) &#8211; wavelength array</li>
+<li><strong>wl_min</strong> (<em>float</em>) &#8211; minimum required wavelength</li>
+<li><strong>wl_max</strong> (<em>float</em>) &#8211; maximum required wavelength</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a np.ndarray boolean array used to index into the wl array.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 <div class="section" id="wavelength-conversions">
 <h3>Wavelength conversions<a class="headerlink" href="#wavelength-conversions" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="Starfish.grid_tools.vacuum_to_air">
+<code class="descclassname">Starfish.grid_tools.</code><code class="descname">vacuum_to_air</code><span class="sig-paren">(</span><em>wl</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#vacuum_to_air"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.vacuum_to_air" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts vacuum wavelengths to air wavelengths using the Ciddor 1996 formula.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wl</strong> (<em>np.array</em>) &#8211; input vacuum wavelengths</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>wl_air</strong> (<em>np.array</em>) - the wavelengths converted to air wavelengths</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">CA Prieto recommends this as more accurate than the IAU standard.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="Starfish.grid_tools.air_to_vacuum">
+<code class="descclassname">Starfish.grid_tools.</code><code class="descname">air_to_vacuum</code><span class="sig-paren">(</span><em>wl</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#air_to_vacuum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.air_to_vacuum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert air wavelengths to vacuum wavelengths.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wl</strong> (<em>np.array</em>) &#8211; input air wavelegths</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>wl_vac</strong> (<em>np.array</em>) - the wavelengths converted to vacuum.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is generally not recommended to do this, as the function is imprecise.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="Starfish.grid_tools.calculate_n">
+<code class="descclassname">Starfish.grid_tools.</code><code class="descname">calculate_n</code><span class="sig-paren">(</span><em>wl</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/grid_tools.html#calculate_n"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.grid_tools.calculate_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate <em>n</em>, the refractive index of light at a given wavelength.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wl</strong> (<em>np.array</em>) &#8211; input wavelength (in vacuum)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>n_air</strong> (<em>np.array</em>) - the refractive index in air at that wavelength</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="exceptions">
@@ -365,7 +849,7 @@
 <dl class="exception">
 <dt id="Starfish.constants.InterpolationError">
 <em class="property">exception </em><code class="descclassname">Starfish.constants.</code><code class="descname">InterpolationError</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/constants.html#InterpolationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.constants.InterpolationError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raised when the <code class="xref py py-obj docutils literal"><span class="pre">Interpolator</span></code> or <code class="xref py py-obj docutils literal"><span class="pre">IndexInterpolator</span></code> cannot properly interpolate a spectrum,
+<dd><p>Raised when the <a class="reference internal" href="#Starfish.grid_tools.Interpolator" title="Starfish.grid_tools.Interpolator"><code class="xref py py-obj docutils literal"><span class="pre">Interpolator</span></code></a> or <code class="xref py py-obj docutils literal"><span class="pre">IndexInterpolator</span></code> cannot properly interpolate a spectrum,
 usually grid bounds.</p>
 </dd></dl>
 
@@ -378,10 +862,10 @@ usually grid bounds.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="spectrum.html" class="btn btn-neutral float-right" title="Spectrum" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="spectrum.html" class="btn btn-neutral float-right" title="Spectrum">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="overview.html" class="btn btn-neutral" title="Overview" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral" title="Overview"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -390,13 +874,13 @@ usually grid bounds.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013-14, Ian Czekala.
+        &copy; Copyright 2013-15, Ian Czekala.
     </p>
   </div>
+
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+  
 </footer>
-
         </div>
       </div>
 

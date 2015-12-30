@@ -5,7 +5,6 @@
 <!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
   <title>Spectral Emulator &mdash; Starfish 0.1 documentation</title>
@@ -15,6 +14,7 @@
   
 
   
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic|Roboto+Slab:400,700|Inconsolata:400,700&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
 
   
   
@@ -48,7 +48,7 @@
 
 
   
-  <script src="_static/js/modernizr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
 
 </head>
 
@@ -60,14 +60,8 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-nav-search">
         
-
+          <a href="index.html" class="fa fa-home"> Starfish</a>
         
-          <a href="index.html" class="icon icon-home"> Starfish
-        
-
-        
-        </a>
-
         
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -76,8 +70,6 @@
     <input type="hidden" name="area" value="default" />
   </form>
 </div>
-
-        
       </div>
 
       <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
@@ -96,20 +88,11 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="grid_tools.html">Grid Tools</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#downloading-model-spectra">Downloading model spectra</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#raw-grid-interfaces">Raw Grid Interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#creating-your-own-interface">Creating your own interface</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#examples">Examples</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#raw-grid-interfaces">Raw Grid Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#hdf5-creators-and-fast-interfaces">HDF5 creators and Fast interfaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#interpolators">Interpolators</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#instruments">Instruments</a></li>
-<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#utility-functions">Utility Functions</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="grid_tools.html#wavelength-conversions">Wavelength conversions</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="grid_tools.html#utility-functions">Utility Functions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="grid_tools.html#exceptions">Exceptions</a></li>
 </ul>
 </li>
@@ -130,20 +113,52 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="scripts.html">Scripts</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfcat-py">hdfcat.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfplot-py">hdfplot.py</a></li>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#hdfinterplot-py">hdfinterplot.py</a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="scripts.html#plotly-model-py">plotly_model.py</a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#hdf5-scripts">HDF5 Scripts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scripts.html#plotting-scripts">Plotting Scripts</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="cookbook.html">Cookbook</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="cookbook.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14.html">Example: WASP 14</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#just-getting-set-up">Just getting set up.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#generating-the-eigenspectra-and-their-weights">Generating the eigenspectra and their weights</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14.html#using-the-linear-interpolator">Using the linear interpolator</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_data.html">Example: WASP 14 Data Munging</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#set-up-the-calibration-parameters">Set up the calibration parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_data.html#spot-check-your-data-and-model-parameters">Spot check your data and model parameters</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_sampling.html">Example: WASP 14 Sampling</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#preamble">Preamble</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#optimize">Optimize</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#setting-up-an-mcmc-run">Setting up an MCMC run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#running-mcmc">Running MCMC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#sample-with-the-covariance-kernels">Sample with the covariance kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_sampling.html#generate-local-kernels">Generate local kernels</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_wasp14_multi.html">Example: WASP 14 Multiple Orders</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#getting-set-up">Getting set up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#only-spot-check-the-last-order"># Only spot check the last order</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example_wasp14_multi.html#mcmc"># MCMC</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#problems-generating-model-bad-wavelength-range">Problems generating model: Bad wavelength range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#nonetype-and-parameters-out-of-range">NoneType and parameters out of range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#fix-c0-is-incorrectly-disabled"><cite>fix_c0</cite> is incorrectly disabled</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tips_and_tricks.html">Tips and Tricks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#time-how-long-it-takes-your-script-to-run">Time how long it takes your script to run.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#tuning-the-mcmc-jump-sizes">Tuning the MCMC jump sizes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tips_and_tricks.html#how-many-cpus-do-you-have">How many CPUs do you have.</a></li>
 </ul>
 </li>
 </ul>
@@ -173,9 +188,7 @@
     <li>Spectral Emulator</li>
       <li class="wy-breadcrumbs-aside">
         
-          
-            <a href="_sources/emulator.txt" rel="nofollow"> View page source</a>
-          
+          <a href="_sources/emulator.txt" rel="nofollow"> View page source</a>
         
       </li>
   </ul>
@@ -190,7 +203,103 @@
 <h2>Eigenspectra decomposition<a class="headerlink" href="#eigenspectra-decomposition" title="Permalink to this headline">¶</a></h2>
 <p>The first step of configuring the spectral emulator is to choose a subregion of the spectral library corresponding to the star that you will fit. Then, we want to decompose the information content in this subset of the spectral library into several <em>eigenspectra</em>. [Figure A.1 here].</p>
 <p>The eigenspectra decomposition is performed via Principal Component Analysis (PCA). Thankfully, most of the heavy lifting is already implemented by the <code class="docutils literal"><span class="pre">scipy</span></code> package.</p>
-<p><code class="xref py py-obj docutils literal"><span class="pre">PCAGrid</span></code> implements the functionality to create the eigenspectra grid from a synthetic library, and then later query eigenspectra from it.</p>
+<p><a class="reference internal" href="#Starfish.emulator.PCAGrid" title="Starfish.emulator.PCAGrid"><code class="xref py py-obj docutils literal"><span class="pre">PCAGrid</span></code></a> implements the functionality to create the eigenspectra grid from a synthetic library, and then later query eigenspectra from it.</p>
+<dl class="class">
+<dt id="Starfish.emulator.PCAGrid">
+<em class="property">class </em><code class="descclassname">Starfish.emulator.</code><code class="descname">PCAGrid</code><span class="sig-paren">(</span><em>wl</em>, <em>dv</em>, <em>flux_mean</em>, <em>flux_std</em>, <em>eigenspectra</em>, <em>w</em>, <em>w_hat</em>, <em>gparams</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create and query eigenspectra.</p>
+<dl class="classmethod">
+<dt id="Starfish.emulator.PCAGrid.create">
+<em class="property">classmethod </em><code class="descname">create</code><span class="sig-paren">(</span><em>interface</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a PCA grid object from a synthetic spectral library, with
+configuration options specified in a dictionary.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>interface</strong> (<a class="reference internal" href="grid_tools.html#Starfish.grid_tools.HDF5Interface" title="Starfish.grid_tools.HDF5Interface"><em>HDF5Interface</em></a>) &#8211; HDF5Interface containing the instrument-processed spectra.</li>
+<li><strong>ncomp</strong> (<em>int</em>) &#8211; number of eigenspectra to keep</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.determine_chunk_log">
+<code class="descname">determine_chunk_log</code><span class="sig-paren">(</span><em>wl_data</em>, <em>buffer=50.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.determine_chunk_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.determine_chunk_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possibly truncate the wl, eigenspectra, and flux_mean and flux_std in
+response to some data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>wl_data</strong> (<em>np.array</em>) &#8211; The spectrum dataset you want to fit.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.get_index">
+<code class="descname">get_index</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.get_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.get_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a np.array of stellar params (corresponding to a grid point),
+deliver the index that corresponds to the
+entry in the fluxes, list_grid_points, and weights</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.get_weights">
+<code class="descname">get_weights</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.get_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.get_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a np.array of parameters (corresponding to a grid point),
+deliver the weights that reconstruct this spectrum out of eigenspectra.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="Starfish.emulator.PCAGrid.open">
+<em class="property">classmethod </em><code class="descname">open</code><span class="sig-paren">(</span><em>filename='PHOENIX_TRES_PCA.hdf5'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize an object using the PCA already stored to an HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) &#8211; filename of an HDF5 object containing the PCA components.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.reconstruct">
+<code class="descname">reconstruct</code><span class="sig-paren">(</span><em>weights</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.reconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstruct a spectrum given some weights.</p>
+<p>Also correct for original scaling.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.reconstruct_all">
+<code class="descname">reconstruct_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.reconstruct_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.reconstruct_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a (M, npix) array with all of the spectra reconstructed.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.PCAGrid.write">
+<code class="descname">write</code><span class="sig-paren">(</span><em>filename='PHOENIX_TRES_PCA.hdf5'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#PCAGrid.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.PCAGrid.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write the PCA decomposition to an HDF5 file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>filename</strong> (<em>str</em>) &#8211; name of the HDF5 to create.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <p>For example, the following takes a bunch of spectra specified by an <code class="xref py py-obj docutils literal"><span class="pre">HDF5Interface</span></code> and decomposes them into a PCA basis</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">Starfish.grid_tools</span> <span class="kn">import</span> <span class="n">HDF5Interface</span>
 <span class="kn">from</span> <span class="nn">Starfish.emulator</span> <span class="kn">import</span> <span class="n">PCAGrid</span>
@@ -211,6 +320,50 @@
 </div>
 <div class="section" id="model-spectrum-reconstruction">
 <h2>Model spectrum reconstruction<a class="headerlink" href="#model-spectrum-reconstruction" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="Starfish.emulator.Emulator">
+<em class="property">class </em><code class="descclassname">Starfish.emulator.</code><code class="descname">Emulator</code><span class="sig-paren">(</span><em>pca</em>, <em>eparams</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="Starfish.emulator.Emulator.determine_chunk_log">
+<code class="descname">determine_chunk_log</code><span class="sig-paren">(</span><em>wl_data</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator.determine_chunk_log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator.determine_chunk_log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Possibly truncate the wl grid in response to some data. Also truncate eigenspectra, and flux_mean and flux_std.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.Emulator.draw_many_weights">
+<code class="descname">draw_many_weights</code><span class="sig-paren">(</span><em>params</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator.draw_many_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator.draw_many_weights" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>params</strong> (<em>2D np.array</em>) &#8211; multiple parameters to produce weight draws at.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.Emulator.draw_weights">
+<code class="descname">draw_weights</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator.draw_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator.draw_weights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Using the current settings, draw a sample of PCA weights</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="Starfish.emulator.Emulator.open">
+<em class="property">classmethod </em><code class="descname">open</code><span class="sig-paren">(</span><em>filename='PHOENIX_TRES_PCA.hdf5'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator.open"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an Emulator object from an HDF5 file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Starfish.emulator.Emulator.reconstruct">
+<code class="descname">reconstruct</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Starfish/emulator.html#Emulator.reconstruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Starfish.emulator.Emulator.reconstruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reconstructing a spectrum using a random draw of weights. In this case,
+we are making the assumption that we are always drawing a weight at a
+single stellar value.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -220,10 +373,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="model.html" class="btn btn-neutral float-right" title="Model" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="model.html" class="btn btn-neutral float-right" title="Model">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="spectrum.html" class="btn btn-neutral" title="Spectrum" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="spectrum.html" class="btn btn-neutral" title="Spectrum"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -232,13 +385,13 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2013-14, Ian Czekala.
+        &copy; Copyright 2013-15, Ian Czekala.
     </p>
   </div>
+
   Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-
+  
 </footer>
-
         </div>
       </div>
 
