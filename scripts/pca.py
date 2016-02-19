@@ -26,7 +26,8 @@ from Starfish import emulator
 from Starfish.grid_tools import HDF5Interface
 from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator
 from Starfish.covariance import Sigma
-
+#from datetime import datetime
+plt.switch_backend('agg')
 
 if args.create:
     myHDF5 = HDF5Interface()
@@ -120,6 +121,7 @@ if args.optimize:
     PhiPhi = np.linalg.inv(emulator.skinny_kron(my_pca.eigenspectra, my_pca.M))
     priors = Starfish.PCA["priors"]
 
+
     def lnprob(p, fmin=False):
         '''
         :param p: Gaussian Processes hyper-parameters
@@ -127,6 +129,9 @@ if args.optimize:
 
         Calculate the lnprob using Habib's posterior formula for the emulator.
         '''
+        
+        # Calculate how long it takes to run this.
+        #time_a = datetime.datetime.now()
 
         # We don't allow negative parameters.
         if np.any(p < 0.):
@@ -156,6 +161,10 @@ if args.optimize:
         central = my_pca.w_hat.T.dot(np.linalg.solve(C, my_pca.w_hat))
 
         lnp = -0.5 * (pref + central + my_pca.M * my_pca.m * np.log(2. * np.pi)) + lnpriors
+
+        #time_b = datetime.datetime.now()
+        #c = time_b - time_a
+        #print("lnprob took: {} seconds.".format(c.seconds))
 
         # Negate this when using the fmin algorithm
         if fmin:

@@ -163,7 +163,7 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("proposed:", p, result)
+        #print("proposed:", p, result)
         return result
 
     def query_lnprob():
@@ -176,16 +176,16 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("queried:", result)
+        #print("queried:", result)
         return result
 
     def acceptfn():
-        print("Calling acceptfn")
+        #print("Calling acceptfn")
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", True))
 
     def rejectfn():
-        print("Calling rejectfn")
+        #print("Calling rejectfn")
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", False))
 

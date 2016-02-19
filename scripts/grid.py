@@ -17,7 +17,7 @@ if args.create:
 
     # Specifically import the grid interface and instrument that we want.
     instrument = eval("Starfish.grid_tools." + Starfish.data["instruments"][0])()
-    mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"])()
+    mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"]+"GridInterfaceNoAlpha")()
 
     creator = HDF5Creator(mygrid, Starfish.grid["hdf5_path"], instrument,
                           ranges=Starfish.grid["parrange"])
