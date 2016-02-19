@@ -193,6 +193,10 @@ class Order:
         self.mask = self.dataSpectrum.masks[self.order_key]
         self.order = int(self.dataSpectrum.orders[self.order_key])
 
+        # Hack for IGRINS data, Friday Nov 6, 2015- gully
+        #self.sigma[~self.mask] = 99.0 #np.max(self.sigma[self.mask]) * 99.0 
+        #self.fl[~self.mask] = 1.0
+
         self.logger = logging.getLogger("{} {}".format(self.__class__.__name__, self.order))
         if self.debug:
             self.logger.setLevel(logging.DEBUG)
@@ -234,6 +238,7 @@ class Order:
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
+
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -293,6 +298,15 @@ class Order:
 
             R = self.fl - self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
 
+            #print('---------------------------------------------------')
+            #print('X-- Length: {}, NaNs: {}'.format(X.shape, (X != X).sum()))
+            #print('CC-- Length: {}, NaNs: {}'.format(CC.shape, (CC != CC).sum()))
+            #print('C_GP-- Length: {}, NaNs: {}'.format(self.C_GP.shape, (self.C_GP != self.C_GP).sum()))
+            #print('data_mat-- Length: {}, NaNs: {}'.format(self.data_mat.shape,
+            #                                                 (self.data_mat != self.data_mat).sum()))
+            #print('R-- Length: {}, NaNs: {}'.format(R.shape, (R != R).sum()))
+            #print('---------------------------------------------------')
+
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
 
@@ -318,7 +332,7 @@ class Order:
         fix_logg = Starfish.config.get("fix_logg", None)
         if fix_logg is not None:
             p.grid[1] = fix_logg
-        print("grid pars are", p.grid)
+        #print("grid pars are", p.grid)
 
         self.logger.debug("Updating Theta parameters to {}".format(p))
 
@@ -427,7 +441,7 @@ class Order:
         # self.fix_c0 = True if index == (len(DataSpectrum.wls) - 1) else False #Fix the last c0
         # This is necessary if we want to update just a single order.
 
-        if self.chebyshevSpectrum.fix_c0 & (len(self.dataSpectrum.wls) > 1):
+        if self.chebyshevSpectrum.fix_c0 :#& (len(self.dataSpectrum.wls) > 1):
             p0 = np.zeros((self.npoly - 1))
         else:
             self.chebyshevSpectrum.fix_c0 = False
@@ -667,6 +681,16 @@ class SampleThetaPhi(Order):
             logAmp = p[ind]
             ind+=1
             l = p[ind]
+
+            # Here is where we set the Priors on the Phi parameters:
+            # The only prior right now is that the sigAmp must be positive.
+            # We could also put priors on the Chebyshev polynomial coefficients, etc...
+            # This can also be a continuous function of p.  See GitHub Issue #26 !!
+            if not (0.0 < sigAmp): #More conditionals here...
+                lnprior = -np.inf
+                return -np.inf #Circumvent execution of the expen$ive `evaluate()` function...
+            else:
+                lnprior = 0.0
 
             par = PhiParam(self.spectrum_id, self.order, self.chebyshevSpectrum.fix_c0, cheb, sigAmp, logAmp, l)
 
