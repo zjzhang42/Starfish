@@ -69,6 +69,8 @@ if args.noise:
 
 
 if args.matplotlib:
+    import matplotlib
+    #matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(nrows=2, figsize=(10, 8), sharex=True)
@@ -79,9 +81,13 @@ if args.matplotlib:
     ax[0].set_ylabel(r"$f_\lambda$")
     ax[0].legend(loc="lower right")
 
+    # hack by Gully on Nov 30, 2015
+    #ax[0].set_ylim(0,1)
+
     if args.noise:
         ax[1].fill_between(wl, 3*min_spec, 3*max_spec, zorder=0, color=s3)
         ax[1].fill_between(wl, min_spec, max_spec, zorder=0, color=s1)
+        ax[1].set_ylim(-0.2,0.2)
 
     ax[1].plot(wl, resid, "k", label="residual")
     ax[1].set_xlabel(r"$\lambda$ [AA]")

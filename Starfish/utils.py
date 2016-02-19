@@ -265,6 +265,9 @@ def paper_plot(flatchain, base, format=".pdf"):
 
 
 def plot_walkers(flatchain, base, start=0, end=-1, labels=None):
+    
+    import matplotlib
+    matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     from matplotlib.ticker import MaxNLocator
     # majorLocator = MaxNLocator(nbins=4)
@@ -288,10 +291,11 @@ def plot_walkers(flatchain, base, start=0, end=-1, labels=None):
 
 def estimate_covariance(flatchain, base):
 
-    if args.ndim:
-        d = args.ndim
-    else:
-        d = flatchain.shape[1]
+    #if args.ndim:
+    #    d = args.ndim
+    #else:
+    #    d = flatchain.shape[1]
+    d = flatchain.shape[1]
 
     import matplotlib.pyplot as plt
 
@@ -322,10 +326,12 @@ def estimate_covariance(flatchain, base):
     print(std_dev)
 
     print("'Optimal' jumps")
-    if args.ndim:
-        d = args.ndim
-    else:
-        d = flatchain.shape[1]
+    #if args.ndim:
+    #    d = args.ndim
+    #else:
+    #    d = flatchain.shape[1]
+    d=flatchain.shape[1]
+
     print(2.38/np.sqrt(d) * std_dev)
 
     np.save(base + "opt_jump.npy", opt_jump)
