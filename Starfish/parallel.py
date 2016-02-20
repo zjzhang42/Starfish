@@ -38,6 +38,7 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.linalg import cho_factor, cho_solve
 from numpy.linalg import slogdet
 from astropy.stats import sigma_clip
+from scipy.stats import norm
 
 import gc
 import logging
@@ -262,15 +263,36 @@ class Order:
         '''
         return self.lnprob
 
+    def lnprior_fn(self, p):
+        '''
+        Return the lnprior for input stellar parameters.
+
+        Intended to be called from lnprob_Theta
+        '''
+        #For now just hardcode the location and scale parameters.
+        # log-g
+        loc = 3.7
+        scl = 0.02
+        lnprior_logg = norm.logpdf(p.grid[1], loc=loc, scale=scl)
+        #Everything else will have a flat prior over the grid.
+        lnprior_allelse = 0.0
+        lnprior_out = lnprior_logg + lnprior_allelse
+        return lnprior_out
+
     def lnprob_Theta(self, p):
         '''
         Update the model to the Theta parameters and then evaluate the lnprob.
 
         Intended to be called from the master process via the command "LNPROB".
+        NOTE that setting the prior this way means:
+            The prior will only be effective when called from `update_Theta`
+            This could cause some unanticipated behavior...
         '''
         try:
             self.update_Theta(p)
-            lnp = self.evaluate() # Also sets self.lnprob to new value
+            lnlike = self.evaluate() # Also sets self.lnprob to new value
+            lnp = lnlike + self.lnprior_fn(p)
+            self.lnprob = lnp
             return lnp
         except C.ModelError:
             self.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
