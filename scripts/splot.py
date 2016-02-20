@@ -6,6 +6,7 @@ parser.add_argument("file", help="JSON file containing the data, model, and resi
 parser.add_argument("--regions", action="store_true", help="Optionally plot any instantiated regions on top.")
 parser.add_argument("--matplotlib", action="store_true", help="Plot the image using matplotlib")
 parser.add_argument("--noise", action="store_true", help="Plot random draws using the phi parameters.")
+parser.add_argument("--save_draw", action="store_true", help="Save the model and a draw to a file.")
 args = parser.parse_args()
 
 import Starfish
@@ -64,7 +65,7 @@ if args.noise:
     data_mat = get_dense_C(wl, k_func=k_func, max_r=max_r) + phi.sigAmp*sigma_mat + region_mat
 
     # Get many random draws from data_mat
-    draws = random_draws(data_mat, num=4)
+    draws = random_draws(data_mat, num=5)
     min_spec, max_spec = std_envelope(draws)
 
 
@@ -99,3 +100,10 @@ if args.matplotlib:
 
     # fig.subplots_adjust()
     fig.savefig(Starfish.config["plotdir"] + args.file + ".png")
+
+if args.save_draw:
+    draw_4 = draws[4, :]
+    dict_out = {"wl":wl.tolist(), "model":model.tolist(), "noise_draw":draw_4.tolist()}
+    f = open('model_spec.json', "w")
+    json.dump(dict_out, f, indent=2, sort_keys=True)
+    f.close()
