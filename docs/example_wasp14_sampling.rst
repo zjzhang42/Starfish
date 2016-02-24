@@ -72,9 +72,6 @@ If you want, you can spot-check the optimization by generating residual plots ag
     s0_o21phi.json
 
 
-The code currently seems to have a bug: when a single order is optimized as shown above, the `phi.json` is incorrectly updated to flip `fix_c0 = false`.  There should only be 3 polynomial terms in this case, but instead 4 terms are shown.  I am not sure the origin of this problem.  Notably, it goes away when you run the code on multiple spectral orders.
-
-
 Setting up an MCMC run
 =======================
 
