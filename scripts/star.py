@@ -152,7 +152,7 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
 
     # These functions store the variables pconns, cconns, ps.
     def lnprob(p):
-        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6])
         #Distribute the calculation to each process
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("LNPROB", pars))
@@ -193,9 +193,11 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
 
     start = Starfish.config["Theta"]
     p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]])
+    if 'teff2' in start.keys():
+        p0 = np.append(p0, start["teff2"])
 
     jump = Starfish.config["Theta_jump"]
-    cov = np.diag(np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"]])**2)
+    cov = np.diag(np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"]] + [jump["grid"][0]])**2)
 
     if args.use_cov:
         try:

@@ -236,6 +236,7 @@ class Order:
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
+        self.mus2, self.C_GP2 = None, None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -287,7 +288,12 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        part1 = 0.8 * X.dot(self.C_GP.dot(X.T))
+        part2 = 0.2 * X.dot(self.C_GP2.dot(X.T))
+        part3 = self.data_mat
+        
+        #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        CC = part1 + part2 + part3
 
         try:
             factor, flag = cho_factor(CC)
@@ -297,7 +303,10 @@ class Order:
             raise
 
         try:
-            R = self.fl - self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
+            model1 = 0.8 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
+            model2 = 0.2 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2)
+            net_model = model1 + model2
+            R = self.fl - net_model
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -363,9 +372,12 @@ class Order:
         # Store the current accepted values before overwriting with new proposed values.
         self.flux_mean_last = self.flux_mean.copy()
         self.flux_std_last = self.flux_std.copy()
+
         self.eigenspectra_last = self.eigenspectra.copy()
         self.mus_last = self.mus
         self.C_GP_last = self.C_GP
+        self.mus_last2 = self.mus2
+        self.C_GP_last2 = self.C_GP2
 
         # Local, shifted copy of wavelengths
         wl_FFT = self.wl_FFT * np.sqrt((C.c_kms + p.vz) / (C.c_kms - p.vz))
@@ -398,8 +410,10 @@ class Order:
         if min(self.wl) < min(wl_FFT) or max(self.wl) > max(wl_FFT):
             raise RuntimeError("Data wl grid ({:.2f},{:.2f}) must fit within the range of wl_FFT ({:.2f},{:.2f})".format(min(self.wl), max(self.wl), min(wl_FFT), max(wl_FFT)))
 
+        
         # Take the output from the FFT operation (eigenspectra_full), and stuff them
         # into respective data products
+        # Note: This is where the eigenspectra are defined, *within* the iterator! Wow.
         for lres, hres in zip(chain([self.flux_mean, self.flux_std], self.eigenspectra), eigenspectra_full):
             interp = InterpolatedUnivariateSpline(wl_FFT, hres, k=5)
             lres[:] = interp(self.wl)
@@ -414,12 +428,14 @@ class Order:
         self.flux_mean *= Omega
         self.flux_std *= Omega
 
-
-
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
+        self.emulator.params = np.append(p.teff2, p.grid[1:])
+        #self.emulator.params = np.append(6132.0, p.grid[1:])
+        self.mus2, self.C_GP2 = self.emulator.matrix
+
 
     def revert_Theta(self):
         '''
@@ -436,6 +452,8 @@ class Order:
 
         self.mus = self.mus_last
         self.C_GP = self.C_GP_last
+        self.mus2 = self.mus_last2
+        self.C_GP2 = self.C_GP_last2
 
     def decide_Theta(self, yes):
         '''
