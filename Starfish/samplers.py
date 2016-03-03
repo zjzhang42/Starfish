@@ -179,6 +179,10 @@ class StateSampler(Sampler):
             if incremental_save:
                 if (((i+1) % incremental_save) == 0) & (i > 0): 
                     np.save('chain_backup.npy', self._chain)
+                    print("{Teff:->8} {logg:->8} {feh:->8}".format(Teff="Teff1", logg="log g", feh="[Fe/H]"), end=' ')
+                    print("{vz:->8} {vsini:->8} {logOm:->8}".format(vz="RV", vsini="vsini", logOm="logOm."), end=' ')
+                    print("{Teff2:->8}".format(Teff2="Teff2"), end=' ')
+                    print("{result:->12}".format(result="lnprob"))
 
             # Heavy duty iterator action going on right here...
             yield p, lnprob0, self.random_state

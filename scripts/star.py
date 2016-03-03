@@ -7,6 +7,8 @@ import Starfish
 from Starfish import parallel
 from Starfish.parallel import args
 from Starfish.model import ThetaParam, PhiParam
+import time
+
 
 if args.generate:
     model = parallel.OptimizeTheta(debug=True)
@@ -163,7 +165,11 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("proposed:", p, result)
+        #print("proposed:", p, result)
+        print("{Teff: >8.1f} {logg: 8.3f} {feh: >8.3f}".format(Teff=pars.grid[0], logg=pars.grid[1], feh=pars.grid[2]), end=' ')
+        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.3f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
+        print("{Teff2: >8.1f}".format(Teff2=pars.teff2), end=' ')
+        print("{result: >12.1f}".format(result=result), end=' ')
         return result
 
     def query_lnprob():
@@ -176,16 +182,16 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("queried:", result)
+        #print("queried:", result)
         return result
 
     def acceptfn():
-        print("Calling acceptfn")
+        print("{:->10}".format("Accept"))
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", True))
 
     def rejectfn():
-        print("Calling rejectfn")
+        print("{:-<10}".format("Reject"))
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", False))
 
@@ -206,12 +212,20 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
         except FileNotFoundError:
             print("No optimal jump matrix found, using diagonal jump matrix.")
 
+
     sampler = StateSampler(lnprob, p0, cov, query_lnprob=query_lnprob, acceptfn=acceptfn, rejectfn=rejectfn, debug=True, outdir=Starfish.routdir)
 
+    start = time.time()
     p, lnprob, state = sampler.run_mcmc(p0, N=args.samples, incremental_save=args.incremental_save)
-    print("Final", p)
-
+    end = time.time()
+    dtime = end - start
     sampler.write()
+    print("{:-^50}".format("Final:"))
+    print("Total time : {:8.2f} minutes".format(dtime/60.0))
+    print("N samples  : {:8.1f}".format(args.samples))
+    print("Time/sample: {:8.1f} samples / second".format(dtime/args.samples))
+    print("Accept frac: {:8.1%}".format(sampler.acceptance_fraction))
+    
 
     # Kill all of the orders
     for pconn in pconns.values():

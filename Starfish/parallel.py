@@ -288,8 +288,8 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        part1 = 0.8 * X.dot(self.C_GP.dot(X.T))
-        part2 = 0.2 * X.dot(self.C_GP2.dot(X.T))
+        part1 = 0.7 * X.dot(self.C_GP.dot(X.T))
+        part2 = 0.3 * 0.5 * X.dot(self.C_GP2.dot(X.T))
         part3 = self.data_mat
         
         #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
@@ -303,8 +303,8 @@ class Order:
             raise
 
         try:
-            model1 = 0.8 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
-            model2 = 0.2 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2)
+            model1 = 0.7 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
+            model2 = 0.3 * 0.5 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2)
             net_model = model1 + model2
             R = self.fl - net_model
 
@@ -365,7 +365,7 @@ class Order:
         fix_logg = Starfish.config.get("fix_logg", None)
         if fix_logg is not None:
             p.grid[1] = fix_logg
-        print("grid pars are", p.grid)
+        #print("grid pars are", p.grid)
 
         self.logger.debug("Updating Theta parameters to {}".format(p))
 
