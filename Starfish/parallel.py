@@ -237,6 +237,7 @@ class Order:
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
         self.mus2, self.C_GP2 = None, None
+        self.ff = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -288,8 +289,8 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        part1 = 0.7 * X.dot(self.C_GP.dot(X.T))
-        part2 = 0.3 * 0.5 * X.dot(self.C_GP2.dot(X.T))
+        part1 = (1-self.ff)**2 * X.dot(self.C_GP.dot(X.T))
+        part2 = (self.ff * 1.0/2.39894)**2 * X.dot(self.C_GP2.dot(X.T))
         part3 = self.data_mat
         
         #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
@@ -303,8 +304,8 @@ class Order:
             raise
 
         try:
-            model1 = 0.7 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
-            model2 = 0.3 * 0.5 * self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2)
+            model1 = (1-self.ff) * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            model2 = self.ff * 1.0/2.39894 * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
             net_model = model1 + model2
             R = self.fl - net_model
 
@@ -378,6 +379,7 @@ class Order:
         self.C_GP_last = self.C_GP
         self.mus_last2 = self.mus2
         self.C_GP_last2 = self.C_GP2
+        self.ff_last = self.ff
 
         # Local, shifted copy of wavelengths
         wl_FFT = self.wl_FFT * np.sqrt((C.c_kms + p.vz) / (C.c_kms - p.vz))
@@ -435,6 +437,7 @@ class Order:
         self.emulator.params = np.append(p.teff2, p.grid[1:])
         #self.emulator.params = np.append(6132.0, p.grid[1:])
         self.mus2, self.C_GP2 = self.emulator.matrix
+        self.ff = p.ff
 
 
     def revert_Theta(self):
@@ -454,6 +457,7 @@ class Order:
         self.C_GP = self.C_GP_last
         self.mus2 = self.mus_last2
         self.C_GP2 = self.C_GP_last2
+        self.ff = self.ff_last
 
     def decide_Theta(self, yes):
         '''
@@ -610,10 +614,15 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        model = self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
+        #model = self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
+        model1 = (1-self.ff) * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+        model2 = self.ff * 1.0/2.39894 * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
+        model = model1 + model2
         resid = self.fl - model
 
-        my_dict = {"wl":self.wl.tolist(), "data":self.fl.tolist(), "model":model.tolist(), "resid":resid.tolist(), "sigma":self.sigma.tolist(), "spectrum_id":self.spectrum_id, "order":self.order}
+        my_dict = {"wl":self.wl.tolist(), "data":self.fl.tolist(), "model":model.tolist(), 
+                    "model1":model1.tolist(), "model2":model2.tolist(), 
+                    "resid":resid.tolist(), "sigma":self.sigma.tolist(), "spectrum_id":self.spectrum_id, "order":self.order}
 
         fname = Starfish.specfmt.format(self.spectrum_id, self.order)
         f = open(fname + "spec.json", 'w')
