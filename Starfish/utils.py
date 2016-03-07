@@ -5,6 +5,7 @@ import csv
 import h5py
 from astropy.table import Table
 from astropy.io import ascii
+import Starfish
 
 def multivariate_normal(cov):
     np.random.seed()
@@ -220,9 +221,16 @@ def plot(flatchain, base, format=".png"):
 
     import triangle
 
+    c=Starfish.config["Theta"]
+    truths = c['grid'] + [c['vz'], c['vsini'], c['logOmega'], c['teff2'], c['ff']]
+
+    #labels = [r"$T_\mathrm{eff}$ [K]", r"$\log g$ [dex]", r"$Z$ [dex]",
+    #r"$v_z$ [km/s]", r"$v \sin i$ [km/s]", r"$\log_{10} \Omega$"]
     labels = [r"$T_\mathrm{eff}$ [K]", r"$\log g$ [dex]", r"$Z$ [dex]",
-    r"$v_z$ [km/s]", r"$v \sin i$ [km/s]", r"$\log_{10} \Omega$"]
-    figure = triangle.corner(flatchain, quantiles=[0.16, 0.5, 0.84],
+    r"$v_z$ [km/s]", r"$v \sin i$ [km/s]", r"$\log_{10} \Omega$", r"$T_\mathrm{eff}$ [K]", 
+    r"$f$", ]
+
+    figure = triangle.corner(flatchain, quantiles=[0.16, 0.5, 0.84], truths=truths, 
         plot_contours=True, plot_datapoints=False, labels=labels, show_titles=True)
     figure.savefig(base + "triangle" + format)
 

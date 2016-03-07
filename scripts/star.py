@@ -8,6 +8,7 @@ from Starfish import parallel
 from Starfish.parallel import args
 from Starfish.model import ThetaParam, PhiParam
 import time
+from emcee.utils import sample_ball
 
 
 if args.generate:
@@ -205,7 +206,8 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
         p0 = np.append(p0, start["ff"])
 
     jump = Starfish.config["Theta_jump"]
-    cov = np.diag(np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"], jump["teff2"], jump["ff"]])**2)
+    cov_on_diags = np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"], jump["teff2"], jump["ff"]])
+    cov = np.diag(cov_on_diags**2)
 
     if args.use_cov:
         try:
@@ -214,11 +216,13 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
         except FileNotFoundError:
             print("No optimal jump matrix found, using diagonal jump matrix.")
 
+    p0_ball = sample_ball(p0, cov_on_diags)
+    p0_ball.shape =(-1)
 
-    sampler = StateSampler(lnprob, p0, cov, query_lnprob=query_lnprob, acceptfn=acceptfn, rejectfn=rejectfn, debug=True, outdir=Starfish.routdir)
+    sampler = StateSampler(lnprob, p0_ball, cov, query_lnprob=query_lnprob, acceptfn=acceptfn, rejectfn=rejectfn, debug=True, outdir=Starfish.routdir)
 
     start = time.time()
-    p, lnprob, state = sampler.run_mcmc(p0, N=args.samples, incremental_save=args.incremental_save)
+    p, lnprob, state = sampler.run_mcmc(p0_ball, N=args.samples, incremental_save=args.incremental_save)
     end = time.time()
     dtime = end - start
     sampler.write()
