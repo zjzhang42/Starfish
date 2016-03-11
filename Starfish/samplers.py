@@ -182,6 +182,7 @@ class StateSampler(Sampler):
                     print("{Teff:->8} {logg:->8} {feh:->8}".format(Teff="Teff1", logg="log g", feh="[Fe/H]"), end=' ')
                     print("{vz:->8} {vsini:->8} {logOm:->8}".format(vz="RV", vsini="vsini", logOm="logOm."), end=' ')
                     print("{Teff2:->8}".format(Teff2="Teff2"), end=' ')
+                    print("{ff:->8}".format(ff="ff"), end=' ')
                     print("{result:->12}".format(result="lnprob"))
 
             # Heavy duty iterator action going on right here...
