@@ -30,6 +30,7 @@ import Starfish.grid_tools
 from Starfish.samplers import StateSampler
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
+from Starfish.emulator import F_bol_interp
 import Starfish.constants as C
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 from Starfish.model import ThetaParam, PhiParam
@@ -218,6 +219,7 @@ class Order:
 
         self.emulator = Emulator.open()
         self.emulator.determine_chunk_log(self.wl)
+        self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
 
         self.pca = self.emulator.pca
 
@@ -408,6 +410,10 @@ class Order:
         # Helps keep memory usage low, seems like the numpy routine is slow
         # to clear allocated memory for each iteration.
         gc.collect()
+
+        # Determine the F_bol:
+        F_bol = self.F_bol_interp.interp(p.grid)
+        print("F_bol: {}".format(F_bol))
 
         # Adjust flux_mean and flux_std by Omega
         Omega = 10**p.logOmega

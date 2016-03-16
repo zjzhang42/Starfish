@@ -267,6 +267,9 @@ class PHOENIXGridInterface(RawGridInterface):
         for key, value in hdr.items():
             if key[:3] == "PHX":
                 header[key] = value
+        #Add an F_bol keyword if the spectra are normalized
+        if self.norm:
+            header["F_bol"] = F_bol
 
         return (f[self.ind], header)
 

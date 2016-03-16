@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
 from sklearn.decomposition import PCA
+from scipy.interpolate import LinearNDInterpolator
 import math
 
 import Starfish
@@ -322,6 +323,35 @@ class PCAGrid:
             recon_fluxes[i, :] = np.sum(f, axis=0) * self.flux_std + self.flux_mean
 
         return recon_fluxes
+
+
+class F_bol_interp:
+    '''
+    Interpolate the F_bol from the grid for any arbitrary stellar parameter
+    '''
+    def __init__(self, GridInterface):
+        '''
+        Provide the emulation products.
+
+        :param pca: object storing the principal components, the eigenpsectra
+        :type pca: PCAGrid
+        :param eparams: Optimized GP hyperparameters.
+        :type eparams: 1D np.array
+        '''
+        print("entered F_bol_interp __init__")
+        myHDF5 = HDF5Interface()
+        n_gps, n_dims = myHDF5.grid_points.shape
+        F_bol = np.zeros(n_gps)
+        for i in range(n_gps):
+            _, hdr = myHDF5.load_flux_hdr(myHDF5.grid_points[i])
+            F_bol[i] = hdr["F_bol"]
+        X_grid = myHDF5.grid_points
+        y_dat = F_bol
+        ld = LinearNDInterpolator(X_grid, y_dat)
+        self.ld = ld
+
+    def interp(self, grid_pars):
+        return self.ld(grid_pars)
 
 
 class Emulator:
