@@ -222,13 +222,13 @@ def plot(flatchain, base, format=".png"):
     import triangle
 
     c=Starfish.config["Theta"]
-    truths = c['grid'] + [c['vz'], c['vsini'], c['logOmega'], c['teff2'], c['ff']]
+    truths = c['grid'] + [c['vz'], c['vsini'], c['logOmega'], c['teff2'], c['logOmega2']]
 
     #labels = [r"$T_\mathrm{eff}$ [K]", r"$\log g$ [dex]", r"$Z$ [dex]",
     #r"$v_z$ [km/s]", r"$v \sin i$ [km/s]", r"$\log_{10} \Omega$"]
     labels = [r"$T_\mathrm{eff}$ [K]", r"$\log g$ [dex]", r"$Z$ [dex]",
     r"$v_z$ [km/s]", r"$v \sin i$ [km/s]", r"$\log_{10} \Omega$", r"$T_\mathrm{eff}$ [K]", 
-    r"$f$", ]
+    r"$\log_{10} \Omega2$", ]
 
     figure = triangle.corner(flatchain, quantiles=[0.16, 0.5, 0.84], truths=truths, 
         plot_contours=True, plot_datapoints=False, labels=labels, show_titles=True)

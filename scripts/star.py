@@ -155,7 +155,7 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
 
     # These functions store the variables pconns, cconns, ps.
     def lnprob(p):
-        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], ff=p[7])
+        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], logOmega2=p[7])
         #Distribute the calculation to each process
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("LNPROB", pars))
@@ -168,8 +168,8 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
         result = np.sum(lnps) # + lnprior
         #print("proposed:", p, result)
         print("{Teff: >8.1f} {logg: 8.3f} {feh: >8.3f}".format(Teff=pars.grid[0], logg=pars.grid[1], feh=pars.grid[2]), end=' ')
-        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.3f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
-        print("{Teff2: >8.1f} {ff: >8.3%}".format(Teff2=pars.teff2, ff=pars.ff), end=' ')
+        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.4f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
+        print("{Teff2: >8.1f} {logOm2: >8.4f}".format(Teff2=pars.teff2, logOm2=pars.logOmega2), end=' ')
         print("{result: >12.1f}".format(result=result), end=' ')
         return result
 
@@ -202,11 +202,11 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
     p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]])
     if 'teff2' in start.keys():
         p0 = np.append(p0, start["teff2"])
-    if 'ff' in start.keys():
-        p0 = np.append(p0, start["ff"])
+    if 'logOmega2' in start.keys():
+        p0 = np.append(p0, start["logOmega2"])
 
     jump = Starfish.config["Theta_jump"]
-    cov_on_diags = np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"], jump["teff2"], jump["ff"]])
+    cov_on_diags = np.array(jump["grid"] + [jump["vz"], jump["vsini"], jump["logOmega"], jump["teff2"], jump["logOmega2"]])
     cov = np.diag(cov_on_diags**2)
 
     if args.use_cov:

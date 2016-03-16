@@ -239,7 +239,10 @@ class Order:
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
         self.mus2, self.C_GP2 = None, None
-        self.ff = None
+        #self.ff = None
+        self.Omega = None
+        self.Omega2 = None
+        self.qq = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -291,8 +294,8 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        part1 = (1-self.ff)**2 * X.dot(self.C_GP.dot(X.T))
-        part2 = (self.ff * 1.0/2.39894)**2 * X.dot(self.C_GP2.dot(X.T))
+        part1 = self.Omega**2 * X.dot(self.C_GP.dot(X.T))
+        part2 = self.Omega2**2 * X.dot(self.C_GP2.dot(X.T))
         part3 = self.data_mat
         
         #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
@@ -306,8 +309,8 @@ class Order:
             raise
 
         try:
-            model1 = (1-self.ff) * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
-            model2 = self.ff * 1.0/2.39894 * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
+            model1 = self.Omega * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            model2 = self.Omega2 * self.qq * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
             net_model = model1 + model2
             R = self.fl - net_model
 
@@ -381,7 +384,10 @@ class Order:
         self.C_GP_last = self.C_GP
         self.mus_last2 = self.mus2
         self.C_GP_last2 = self.C_GP2
-        self.ff_last = self.ff
+        #self.ff_last = self.ff
+        self.Omega_last = self.Omega
+        self.Omega2_last = self.Omega2
+        self.qq_last = self.qq
 
         # Local, shifted copy of wavelengths
         wl_FFT = self.wl_FFT * np.sqrt((C.c_kms + p.vz) / (C.c_kms - p.vz))
@@ -427,14 +433,15 @@ class Order:
         # to clear allocated memory for each iteration.
         gc.collect()
 
-        # Determine the F_bol:
-        F_bol = self.F_bol_interp.interp(p.grid)
-        print("F_bol: {}".format(F_bol))
+        # Determine the F_bol ratio
+        F_bol1 = self.F_bol_interp.interp(p.grid)
+        F_bol2 = self.F_bol_interp.interp(np.append(p.teff2, p.grid[1:]))
+        self.qq = F_bol2[0]/F_bol1[0]
 
         # Adjust flux_mean and flux_std by Omega
-        Omega = 10**p.logOmega
-        self.flux_mean *= Omega
-        self.flux_std *= Omega
+        #Omega = 10**p.logOmega
+        #self.flux_mean *= Omega
+        #self.flux_std *= Omega
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
@@ -443,7 +450,8 @@ class Order:
         self.emulator.params = np.append(p.teff2, p.grid[1:])
         #self.emulator.params = np.append(6132.0, p.grid[1:])
         self.mus2, self.C_GP2 = self.emulator.matrix
-        self.ff = p.ff
+        self.Omega = 10**p.logOmega
+        self.Omega2 = 10**p.logOmega2
 
 
     def revert_Theta(self):
@@ -463,7 +471,9 @@ class Order:
         self.C_GP = self.C_GP_last
         self.mus2 = self.mus_last2
         self.C_GP2 = self.C_GP_last2
-        self.ff = self.ff_last
+        self.Omega = self.Omega_last
+        self.Omega2 = self.Omega2_last
+        self.qq = self.qq_last
 
     def decide_Theta(self, yes):
         '''
@@ -621,8 +631,8 @@ class Order:
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
         #model = self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus)
-        model1 = (1-self.ff) * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
-        model2 = self.ff * 1.0/2.39894 * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
+        model1 = self.Omega * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+        model2 = self.Omega2 * self.qq * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
         model = model1 + model2
         resid = self.fl - model
 
