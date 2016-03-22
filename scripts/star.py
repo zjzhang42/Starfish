@@ -52,7 +52,8 @@ if args.optimize == "Theta":
 
         # Assume p is [temp, logg, Z, vz, vsini, logOmega]
 
-        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        #pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], logOmega2=p[7])
 
         #Distribute the calculation to each process
         for ((spectrum_id, order_id), pconn) in pconns.items():
@@ -66,7 +67,11 @@ if args.optimize == "Theta":
 
         s = np.sum(lnps)
 
-        print(pars, "lnp:", s)
+        #print(pars, "lnp:", s)
+        print("{Teff: >8.1f} {logg: 8.3f} {feh: >8.3f}".format(Teff=pars.grid[0], logg=pars.grid[1], feh=pars.grid[2]), end=' ')
+        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.4f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
+        print("{Teff2: >8.1f} {logOm2: >8.4f}".format(Teff2=pars.teff2, logOm2=pars.logOmega2), end=' ')
+        print("{s: >12.1f}".format(s=s))
 
         if s == -np.inf:
             return 1e99
@@ -75,11 +80,15 @@ if args.optimize == "Theta":
 
     start = Starfish.config["Theta"]
     p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]])
+    if 'teff2' in start.keys():
+        p0 = np.append(p0, start["teff2"])
+    if 'logOmega2' in start.keys():
+        p0 = np.append(p0, start["logOmega2"])
 
     from scipy.optimize import fmin
     p = fmin(fprob, p0, maxiter=10000, maxfun=10000)
-    print(p)
-    pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+    #print(p)
+    pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], logOmega2=p[7])
     pars.save()
 
     # Kill all of the orders
