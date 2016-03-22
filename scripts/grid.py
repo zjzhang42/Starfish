@@ -18,14 +18,17 @@ if args.create:
     # Specifically import the grid interface and instrument that we want.
     instrument = eval("Starfish.grid_tools." + Starfish.data["instruments"][0])()
 
-    # `norm` is a temporary keyword in the `config.yaml` file.  
-    # We are need *un*-normalized (i.e. *raw*) spectra from the models to compute the relative flux ratio
-    norm = Starfish.config["grid"]["norm"]
+    #If the instrument has an explicit air/vacuum state, use it.  Otherwise assume air.  #Issue 57
+    try:
+        air = instrument.air
+        print("New in v0.3: Using explicit air/vacuum state from Instrument class.")
+    except AttributeError:
+        air = True
 
     if (Starfish.data["grid_name"] == "PHOENIX") & (len(Starfish.grid['parname']) == 3):
-        mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"]+ "GridInterfaceNoAlpha")(norm=norm)
+        mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"]+ "GridInterfaceNoAlpha")(air=air)
     else:
-        mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"]+ "GridInterface")(norm=norm)
+        mygrid = eval("Starfish.grid_tools." + Starfish.data["grid_name"]+ "GridInterface")(air=air)
 
     
     creator = HDF5Creator(mygrid, Starfish.grid["hdf5_path"], instrument,
