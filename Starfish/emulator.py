@@ -341,7 +341,7 @@ class F_bol_interp:
         :param eparams: Optimized GP hyperparameters.
         :type eparams: 1D np.array
         '''
-        print("entered F_bol_interp __init__")
+        
         myHDF5 = HDF5Interface()
         n_gps, n_dims = myHDF5.grid_points.shape
         F_bol = np.zeros(n_gps)
