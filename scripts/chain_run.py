@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser(description="Measure statistics from MCMC runs,
 parser.add_argument("--chain", action="store_true", help="Make a plot of the position of the chains.")
 parser.add_argument("-t", "--triangle", action="store_true", help="Make a triangle (staircase) plot of the parameters.")
 parser.add_argument("--burn", type=int, default=0, help="How many samples to discard from the beginning of the chain for burn in.")
+parser.add_argument("--spec", action="store_true", help="Make a spectrum with the current config.yaml file values.")
 
 args = parser.parse_args()
 
@@ -32,6 +33,7 @@ def chdir(dirname=None):
 
 
 paths = glob("s*o*/mc.hdf5")
+spec_fns = glob("s*o*spec.json")
 
 if args.triangle:
     flatchain = utils.h5read("mc.hdf5", args.burn)
@@ -61,3 +63,12 @@ if args.chain:
         with chdir(dirname):
             subprocess.call("ls")
             subprocess.call(cmd)
+
+if args.spec:
+
+    for spec in spec_fns:
+
+        cmd = ["splot.py", spec, "--matplotlib"]
+        print(cmd)
+
+        subprocess.call(cmd)
