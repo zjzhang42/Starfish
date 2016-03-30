@@ -9,6 +9,7 @@
 # parameters into one place, but I'm open to new suggestions.
 
 import argparse
+
 parser = argparse.ArgumentParser(prog="parallel.py", description="Run Starfish fitting model in parallel.")
 parser.add_argument("-r", "--run_index", help="All data will be written into this directory, overwriting any that exists. Default is current working directory.")
 # Even though these arguments aren't being used, we need to add them.
@@ -95,6 +96,7 @@ if args.run_index:
     Starfish.routdir = init_directories(args.run_index)
 else:
     Starfish.routdir = ""
+#Starfish.routdir = ""
 
 # list of keys from 0 to (norders - 1)
 order_keys = np.arange(len(Starfish.data["orders"]))
@@ -356,7 +358,7 @@ class Order:
         fix_logg = Starfish.config.get("fix_logg", None)
         if fix_logg is not None:
             p.grid[1] = fix_logg
-        print("grid pars are", p.grid)
+        #print("grid pars are", p.grid)
 
         self.logger.debug("Updating Theta parameters to {}".format(p))
 

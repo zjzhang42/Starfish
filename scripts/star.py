@@ -63,7 +63,9 @@ if args.optimize == "Theta":
 
         s = np.sum(lnps)
 
-        print(pars, "lnp:", s)
+        print("{Teff: >8.1f} {logg: 8.3f} {feh: >8.3f}".format(Teff=pars.grid[0], logg=pars.grid[1], feh=pars.grid[2]), end=' ')
+        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.4f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
+        print("{s: >12.1f}".format(s=s))
 
         if s == -np.inf:
             return 1e99
@@ -75,7 +77,7 @@ if args.optimize == "Theta":
 
     from scipy.optimize import fmin
     p = fmin(fprob, p0, maxiter=10000, maxfun=10000)
-    print(p)
+    #print(p)
     pars = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
     pars.save()
 
@@ -163,7 +165,9 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("proposed:", p, result)
+        print("{Teff: >8.1f} {logg: 8.3f} {feh: >8.3f}".format(Teff=pars.grid[0], logg=pars.grid[1], feh=pars.grid[2]), end=' ')
+        print("{vz: >8.2f} {vsini: 8.2f} {logOm: >8.4f}".format(vz=pars.vz, vsini=pars.vsini, logOm=pars.logOmega), end=' ')
+        print("{result: >12.1f}".format(result=result), end=' ')
         return result
 
     def query_lnprob():
@@ -176,16 +180,16 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
             lnps[i] = pconn.recv()
 
         result = np.sum(lnps) # + lnprior
-        print("queried:", result)
+        #print("queried:", result)
         return result
 
     def acceptfn():
-        print("Calling acceptfn")
+        print("{:->10}".format("Accept"))
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", True))
 
     def rejectfn():
-        print("Calling rejectfn")
+        print("{:-<10}".format("Reject"))
         for ((spectrum_id, order_id), pconn) in pconns.items():
             pconn.send(("DECIDE", False))
 
@@ -207,7 +211,7 @@ if args.sample == "ThetaCheb" or args.sample == "ThetaPhi" or args.sample == "Th
     sampler = StateSampler(lnprob, p0, cov, query_lnprob=query_lnprob, acceptfn=acceptfn, rejectfn=rejectfn, debug=True, outdir=Starfish.routdir)
 
     p, lnprob, state = sampler.run_mcmc(p0, N=args.samples, incremental_save=args.incremental_save)
-    print("Final", p)
+    #print("Final", p)
 
     sampler.write()
 
