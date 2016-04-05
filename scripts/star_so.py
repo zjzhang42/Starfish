@@ -2,6 +2,7 @@
 
 # All of the argument parsing is done in the `parallel.py` module.
 
+import multiprocessing
 import time
 import numpy as np
 import Starfish
@@ -386,10 +387,10 @@ p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0
 
 p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=8)
+n_threads = multiprocessing.cpu_count()
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=n_threads)
 
 #sampler.lnprobfn.f(p0)
-
 
 
 nsteps = args.samples
