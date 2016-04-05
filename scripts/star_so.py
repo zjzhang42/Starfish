@@ -333,7 +333,6 @@ class SampleThetaPhi(Order):
 
             return lnp
 
-        self.sampler = StateSampler(lnfunc, self.p0, cov, query_lnprob=self.get_lnprob, rejectfn=rejectfn, debug=True)
 
     def update_Phi(self, p):
         self.logger.debug("Updating nuisance parameters to {}".format(p))
@@ -361,23 +360,35 @@ model = SampleThetaPhi(debug=True)
 
 model.initialize((0,0))
 
-def lnprob_all(p, model):
-    model.update_Theta(p)
-    model.update_Phi(p)
+def lnprob_all(p):
+    pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+    model.update_Theta(pars1)
+    # hard code npoly=3 (for fixc0 = True with npoly=4) !
+    pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
+    model.update_Phi(pars2)
     lnp = model.evaluate()
     return lnp
 
 import emcee
 
 start = Starfish.config["Theta"]
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]])
+fname = Starfish.specfmt.format(model.spectrum_id, model.order) + "phi.json"
+phi0 = PhiParam.load(fname)
 
-jump = Starfish.config["Theta_jump"]
+ndim, nwalkers = 12, 36
 
-sampler = emcee.EnsembleSampler(8, 11, lnprob_all)
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] + 
+             phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
+
+p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
 
 
-sampler.run_mcmc(pos, 2)
+p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
+
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all)
+
+#sampler.lnprobfn.f(p0)
+sampler.run_mcmc(p0_ball, 2)
 
 np.save('emcee_chain.npy',sampler.chain)
 
