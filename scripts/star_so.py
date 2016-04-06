@@ -12,6 +12,7 @@ import argparse
 parser = argparse.ArgumentParser(prog="star_so.py", description="Run Starfish fitting model in single order mode with many walkers.")
 parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
+parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
 args = parser.parse_args()
 
 import os
@@ -368,7 +369,7 @@ def lnprob_all(p):
         lnp = model.evaluate()
         return lnp
     except C.ModelError:
-            self.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
+            model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
             return -np.inf
 
 import emcee
@@ -377,20 +378,20 @@ start = Starfish.config["Theta"]
 fname = Starfish.specfmt.format(model.spectrum_id, model.order) + "phi.json"
 phi0 = PhiParam.load(fname)
 
-ndim, nwalkers = 12, 36
+ndim, nwalkers = 12, 40
 
 p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] + 
              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
 p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
 
-
-p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
+if args.resume:
+    p0_ball = np.load("emcee_chain.npy")[:,-1,:]
+else:
+    p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
 n_threads = multiprocessing.cpu_count()
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=n_threads)
-
-#sampler.lnprobfn.f(p0)
 
 
 nsteps = args.samples
