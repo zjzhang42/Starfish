@@ -363,14 +363,14 @@ def lnprob_all(p):
     try:
         pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
         model.update_Theta(pars1)
-        # hard code npoly=3 (for fixc0 = True with npoly=4) !
+        # hard code npoly=3 (for fixc0 = True with npoly=4)
         pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
         model.update_Phi(pars2)
         lnp = model.evaluate()
         return lnp
     except C.ModelError:
-            model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
-            return -np.inf
+        model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
+        return -np.inf
 
 import emcee
 
