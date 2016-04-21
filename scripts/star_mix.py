@@ -390,7 +390,7 @@ def lnprob_all(p):
         model.update_Theta(pars1)
         # hard code npoly=3 (for fixc0 = True with npoly=4)
         #pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
-        pars2 = PhiParam(0, 0, True, p[8:10], p[11], p[12], p[13])
+        pars2 = PhiParam(0, 0, True, p[8:11], p[11], p[12], p[13])
         model.update_Phi(pars2)
         lnp = model.evaluate()
         return lnp
