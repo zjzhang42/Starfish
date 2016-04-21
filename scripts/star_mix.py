@@ -20,6 +20,7 @@ import os
 import Starfish.grid_tools
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
+from Starfish.emulator import F_bol_interp
 import Starfish.constants as C
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 
@@ -118,6 +119,7 @@ class Order:
 
         self.emulator = Emulator.open()
         self.emulator.determine_chunk_log(self.wl)
+        self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
 
         self.pca = self.emulator.pca
 
@@ -136,6 +138,11 @@ class Order:
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
+        self.mus2, self.C_GP2 = None, None
+        #self.ff = None
+        self.Omega = None
+        self.Omega2 = None
+        self.qq = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -170,7 +177,12 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        part1 = self.Omega**2 * X.dot(self.C_GP.dot(X.T))
+        part2 = self.Omega2**2 * X.dot(self.C_GP2.dot(X.T))
+        part3 = self.data_mat
+        
+        #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        CC = part1 + part2 + part3
 
         try:
             factor, flag = cho_factor(CC)
@@ -180,7 +192,10 @@ class Order:
             raise
 
         try:
-            R = self.fl - self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
+            model1 = self.Omega * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            model2 = self.Omega2 * self.qq * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
+            net_model = model1 + model2
+            R = self.fl - net_model
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -192,6 +207,7 @@ class Order:
         except np.linalg.linalg.LinAlgError:
             print("Spectrum:", self.spectrum_id, "Order:", self.order)
             raise
+
 
 
     def update_Theta(self, p):
@@ -261,17 +277,25 @@ class Order:
         # to clear allocated memory for each iteration.
         gc.collect()
 
+        # Determine the F_bol ratio
+        F_bol1 = self.F_bol_interp.interp(p.grid)
+        F_bol2 = self.F_bol_interp.interp(np.append(p.teff2, p.grid[1:]))
+        self.qq = F_bol2[0]/F_bol1[0]
+
         # Adjust flux_mean and flux_std by Omega
-        Omega = 10**p.logOmega
-        self.flux_mean *= Omega
-        self.flux_std *= Omega
-
-
+        #Omega = 10**p.logOmega
+        #self.flux_mean *= Omega
+        #self.flux_std *= Omega
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
+        self.emulator.params = np.append(p.teff2, p.grid[1:])
+        #self.emulator.params = np.append(6132.0, p.grid[1:])
+        self.mus2, self.C_GP2 = self.emulator.matrix
+        self.Omega = 10**p.logOmega
+        self.Omega2 = 10**p.logOmega2
 
 
 
@@ -361,10 +385,12 @@ model.initialize((0,0))
 
 def lnprob_all(p):
     try:
-        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], logOmega2=p[7])
         model.update_Theta(pars1)
         # hard code npoly=3 (for fixc0 = True with npoly=4)
-        pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
+        #pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
+        pars2 = PhiParam(0, 0, True, p[8:10], p[11], p[12], p[13])
         model.update_Phi(pars2)
         lnp = model.evaluate()
         return lnp
@@ -378,12 +404,12 @@ start = Starfish.config["Theta"]
 fname = Starfish.specfmt.format(model.spectrum_id, model.order) + "phi.json"
 phi0 = PhiParam.load(fname)
 
-ndim, nwalkers = 12, 40
+ndim, nwalkers = 14, 40
 
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] + 
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"], start["teff2"], start["logOmega2"]] + 
              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
-p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
+p0_std = [5, 0.02, 0.02, 0.5, 0.5, 0.01, 5, 0.01, 0.005, 0.005, 0.005, 0.01, 0.001, 0.5]
 
 if args.resume:
     p0_ball = np.load("emcee_chain.npy")[:,-1,:]
