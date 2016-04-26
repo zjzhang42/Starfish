@@ -21,13 +21,13 @@ class ThetaParam:
     :param grid: parameters corresponding to the dimensions of the grid.
     :type grid: 1D np.array
     '''
-    def __init__(self, grid, vz=0.0, vsini=0.0, logOmega=0.0, Av=0.0, teff2=6000.0, logOmega2=-0.5):
+    def __init__(self, grid, vz=0.0, vsini=0.0, logOmega=0.0, Av=0.0, dteff=800.0, logOmega2=-0.5):
         self.grid = grid
         self.vz = vz
         self.vsini = vsini
         self.logOmega = logOmega #log10Omega
         self.Av = Av
-        self.teff2 = teff2
+        self.dteff = dteff
         self.logOmega2 = logOmega2
 
     def save(self, fname="theta.json"):
@@ -61,7 +61,7 @@ class ThetaParam:
         return cls(**read)
 
     def __repr__(self):
-        return "grid:{} vz:{} vsini:{} logOmega:{} Av:{} teff2:{} ff:{}".format(self.grid, self.vz, self.vsini, self.logOmega, self.Av, self.teff2, self.logOmega2)
+        return "grid:{} vz:{} vsini:{} logOmega:{} Av:{} dteff:{} logOmega2:{}".format(self.grid, self.vz, self.vsini, self.logOmega, self.Av, self.dteff, self.logOmega2)
 
 class ThetaEncoder(json.JSONEncoder):
     '''
