@@ -419,6 +419,8 @@ def lnprob_all(p):
     # Put the prior first.  Require sigAmp to be positive
     if p[11] < 0:
         return -np.inf
+    if p[6] > p[0]:
+        return -np.inf
     # Now we can proceed with the model
     try:
         #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
