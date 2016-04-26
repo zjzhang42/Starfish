@@ -250,6 +250,14 @@ class Order:
         :type p: model.ThetaParam
         '''
 
+        # durty HACK to get fixed logg
+        # Simply fixes the middle value to be 4.29
+        # Check to see if it exists, as well
+        fix_logg = Starfish.config.get("fix_logg", None)
+        if fix_logg is not None:
+            p.grid[1] = fix_logg
+        #print("grid pars are", p.grid)
+
         self.logger.debug("Updating Theta parameters to {}".format(p))
 
         # Store the current accepted values before overwriting with new proposed values.
@@ -303,7 +311,7 @@ class Order:
 
         # Determine the F_bol ratio
         F_bol1 = self.F_bol_interp.interp(p.grid)
-        F_bol2 = self.F_bol_interp.interp(np.append(p.grid[0] - p.dteff, p.grid[1:]))
+        F_bol2 = self.F_bol_interp.interp(np.append(p.teff2, p.grid[1:]))
         self.qq = F_bol2[0]/F_bol1[0]
 
         # Adjust flux_mean and flux_std by Omega
@@ -315,7 +323,8 @@ class Order:
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
-        self.emulator.params = np.append(p.grid[0] - p.dteff, p.grid[1:])
+        self.emulator.params = np.append(p.teff2, p.grid[1:])
+        #self.emulator.params = np.append(6132.0, p.grid[1:])
         self.mus2, self.C_GP2 = self.emulator.matrix
         self.Omega = 10**p.logOmega
         self.Omega2 = 10**p.logOmega2
@@ -410,14 +419,13 @@ def lnprob_all(p):
     # Put the prior first.  Require sigAmp to be positive
     if p[11] < 0:
         return -np.inf
-    if p[6] < 0:
-        return -np.inf
-    if (p[0] - p[6]) < model.emulator.min_params[0]:
-        return -np.inf
     # Now we can proceed with the model
     try:
-        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], dteff=p[6], logOmega2=p[7])
+        #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], teff2=p[6], logOmega2=p[7])
         model.update_Theta(pars1)
+        # hard code npoly=3 (for fixc0 = True with npoly=4)
+        #pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
         pars2 = PhiParam(0, 0, True, p[8:11], p[11], p[12], p[13])
         model.update_Phi(pars2)
         lnp = model.evaluate()
@@ -434,7 +442,7 @@ phi0 = PhiParam.load(fname)
 
 ndim, nwalkers = 14, 40
 
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"], start["dteff"], start["logOmega2"]] + 
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"], start["teff2"], start["logOmega2"]] + 
              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
 p0_std = [5, 0.02, 0.02, 0.5, 0.5, 0.01, 5, 0.01, 0.005, 0.005, 0.005, 0.01, 0.001, 0.5]
