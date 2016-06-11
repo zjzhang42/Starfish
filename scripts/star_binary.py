@@ -2,7 +2,7 @@
 
 # All of the argument parsing is done in the `parallel.py` module.
 
-import multiprocessing
+#import multiprocessing
 import time
 import numpy as np
 import Starfish
@@ -449,25 +449,26 @@ start = Starfish.config["Theta"]
 fname = Starfish.specfmt.format(model.spectrum_id, model.order) + "phi.json"
 phi0 = PhiParam.load(fname)
 
-ndim, nwalkers = 12, 40
+ndim, nwalkers = 18, 40
 
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]]
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] +
               start["grid2"] + [start["vz2"], start["vsini2"], 
               start["logOmega2"]] + 
               phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
-p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01,
-          5, 0.02, 0.02, 0.5, 0.5, -0.01, 
-          -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
+p0_std = [5, 0.02, 0.02, 0.5, 0.5, 0.01,
+          5, 0.02, 0.02, 0.5, 0.5, 0.01, 
+          0.005, 0.005, 0.005, 0.01, 0.001, 0.5]
 
 if args.resume:
     p0_ball = np.load("emcee_chain.npy")[:,-1,:]
 else:
     p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
-n_threads = multiprocessing.cpu_count()
+n_threads = 1#multiprocessing.cpu_count()
 sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=n_threads)
 
+test = lnprob_all(p0)
 
 nsteps = args.samples
 ninc = args.incremental_save
