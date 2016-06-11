@@ -6,10 +6,10 @@ import multiprocessing
 import time
 import numpy as np
 import Starfish
-from Starfish.model import ThetaParam, PhiParam
+from Starfish.model_bin import ThetaParam, PhiParam
 
 import argparse
-parser = argparse.ArgumentParser(prog="star_so.py", description="Run Starfish fitting model in single order mode with many walkers.")
+parser = argparse.ArgumentParser(prog="star_binary.py", description="Run Starfish fitting model in single order mode with many walkers for spectroscopic binaries.")
 parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
@@ -20,6 +20,7 @@ import os
 import Starfish.grid_tools
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
+from Starfish.emulator import F_bol_interp
 import Starfish.constants as C
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 
@@ -118,6 +119,7 @@ class Order:
 
         self.emulator = Emulator.open()
         self.emulator.determine_chunk_log(self.wl)
+        self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
 
         self.pca = self.emulator.pca
 
@@ -136,6 +138,14 @@ class Order:
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
+        self.mus2, self.C_GP2 = None, None
+        #self.ff = None
+
+        #TBD for hackCS
+
+        self.Omega = None
+        self.Omega2 = None
+        self.qq = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -221,19 +231,19 @@ class Order:
 
         # Local, shifted copy of wavelengths
         wl_FFT = self.wl_FFT * np.sqrt((C.c_kms + p.vz) / (C.c_kms - p.vz))
+        wl_FFT2 = self.wl_FFT * np.sqrt((C.c_kms + p.vz2) / (C.c_kms - p.vz2))
 
         # If vsini is less than 0.2 km/s, we might run into issues with
         # the grid spacing. Therefore skip the convolution step if we have
         # values smaller than this.
         # FFT and convolve operations
-        if p.vsini < 0.0:
-            raise C.ModelError("vsini must be positive")
+        if (p.vsini < 0.0):
+            raise C.ModelError("vsini of star 1 must be positive")
         elif p.vsini < 0.2:
             # Skip the vsini taper due to instrumental effects
             eigenspectra_full = self.EIGENSPECTRA.copy()
         else:
             FF = np.fft.rfft(self.EIGENSPECTRA, axis=1)
-
             # Determine the stellar broadening kernel
             ub = 2. * np.pi * p.vsini * self.ss
             sb = j1(ub) / ub - 3 * np.cos(ub) / (2 * ub ** 2) + 3. * np.sin(ub) / (2 * ub ** 3)
@@ -246,9 +256,32 @@ class Order:
             # do ifft
             eigenspectra_full = np.fft.irfft(FF_tap, self.pca.npix, axis=1)
 
+
+        if p.vsini2 < 0.0:
+            raise C.ModelError("vsini of star 2 must be positive")
+        elif p.vsini2 < 0.2:
+            # Skip the vsini taper due to instrumental effects
+            eigenspectra_full2 = self.EIGENSPECTRA.copy()
+        else:
+            FF2 = np.fft.rfft(self.EIGENSPECTRA, axis=1)
+            
+            # Determine the stellar broadening kernel
+            ub2 = 2. * np.pi * p.vsini2 * self.ss
+            sb2 = j1(ub2) / ub2 - 3 * np.cos(ub2) / (2 * ub2 ** 2) + 3. * np.sin(ub2) / (2 * ub2 ** 3)
+            # set zeroth frequency to 1 separately (DC term)
+            sb2[0] = 1.
+
+            # institute vsini taper
+            FF_tap2 = FF2 * sb2
+
+            # do ifft
+            eigenspectra_full2 = np.fft.irfft(FF_tap2, self.pca.npix, axis=1)
+
+
         # Spectrum resample operations
-        if min(self.wl) < min(wl_FFT) or max(self.wl) > max(wl_FFT):
-            raise RuntimeError("Data wl grid ({:.2f},{:.2f}) must fit within the range of wl_FFT ({:.2f},{:.2f})".format(min(self.wl), max(self.wl), min(wl_FFT), max(wl_FFT)))
+        new_wl_FFT = np.concatenate([wl_FFT,wl_FFT2])
+        if min(self.wl) < min(new_wl_FFT) or max(self.wl) > max(new_wl_FFT):
+            raise RuntimeError("Data wl grid ({:.2f},{:.2f}) must fit within the range of wl_FFT ({:.2f},{:.2f})".format(min(self.wl), max(self.wl), min(new_wl_FFT), max(new_wl_FFT)))
 
         # Take the output from the FFT operation (eigenspectra_full), and stuff them
         # into respective data products
@@ -256,6 +289,11 @@ class Order:
             interp = InterpolatedUnivariateSpline(wl_FFT, hres, k=5)
             lres[:] = interp(self.wl)
             del interp
+
+        for lres2, hres2 in zip(chain([self.flux_mean2, self.flux_std2], self.eigenspectra2), eigenspectra_full2):
+            interp2 = InterpolatedUnivariateSpline(wl_FFT2, hres2, k=5)
+            lres2[:] = interp2(self.wl)
+            del interp2
 
         # Helps keep memory usage low, seems like the numpy routine is slow
         # to clear allocated memory for each iteration.
