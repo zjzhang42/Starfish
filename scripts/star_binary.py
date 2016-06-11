@@ -361,7 +361,9 @@ model.initialize((0,0))
 
 def lnprob_all(p):
     try:
-        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5],
+            grid2=p[0:3], vz2=p[3], vsini2=p[4], logOmega2=p[5])
         model.update_Theta(pars1)
         # hard code npoly=3 (for fixc0 = True with npoly=4)
         pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
@@ -380,10 +382,14 @@ phi0 = PhiParam.load(fname)
 
 ndim, nwalkers = 12, 40
 
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] + 
-             phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]]
+              start["grid2"] + [start["vz2"], start["vsini2"], 
+              start["logOmega2"]] + 
+              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
-p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
+p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01,
+          5, 0.02, 0.02, 0.5, 0.5, -0.01, 
+          -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
 
 if args.resume:
     p0_ball = np.load("emcee_chain.npy")[:,-1,:]
