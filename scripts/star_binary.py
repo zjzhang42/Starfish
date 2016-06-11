@@ -136,6 +136,10 @@ class Order:
         self.flux_mean = np.empty((self.ndata,))
         self.flux_std = np.empty((self.ndata,))
 
+        self.eigenspectra2 = np.empty((self.pca.m, self.ndata))
+        self.flux_mean2 = np.empty((self.ndata,))
+        self.flux_std2 = np.empty((self.ndata,))
+
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
         self.mus2, self.C_GP2 = None, None
@@ -179,8 +183,13 @@ class Order:
         self.lnprob_last = self.lnprob
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
+        X2 = (self.chebyshevSpectrum.k * self.flux_std2 * np.eye(self.ndata)).dot(self.eigenspectra2.T)
 
-        CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        part1 = X.dot(self.C_GP.dot(X.T))
+        part2 = X2.dot(self.C_GP2.dot(X2.T))
+        part3 = self.data_mat
+
+        CC=part1+part2+part3
 
         try:
             factor, flag = cho_factor(CC)
@@ -190,7 +199,10 @@ class Order:
             raise
 
         try:
-            R = self.fl - self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
+            model1=self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
+            model2=self.chebyshevSpectrum.k * self.flux_mean2 - X2.dot(self.mus2)
+            model_net=model1+model2
+            R = self.fl - model_net
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -299,18 +311,38 @@ class Order:
         # to clear allocated memory for each iteration.
         gc.collect()
 
-        # Adjust flux_mean and flux_std by Omega
-        Omega = 10**p.logOmega
-        self.flux_mean *= Omega
-        self.flux_std *= Omega
-
-
-
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
 
+
+        # Determine the F_bol ratio
+        F_bol1 = self.F_bol_interp.interp(p.grid)
+        F_bol2 = self.F_bol_interp.interp(p.grid2)
+        self.qq = F_bol2[0]/F_bol1[0]
+
+        # Adjust flux_mean and flux_std by Omega
+        #Omega = 10**p.logOmega
+        #self.flux_mean *= Omega
+        #self.flux_std *= Omega
+
+        # Now update the parameters from the emulator
+        # If pars are outside the grid, Emulator will raise C.ModelError
+        self.emulator.params = p.grid
+        self.mus, self.C_GP = self.emulator.matrix
+        self.emulator.params = p.grid2
+        #self.emulator.params = np.append(6132.0, p.grid[1:])
+        self.mus2, self.C_GP2 = self.emulator.matrix
+        self.Omega = 10**p.logOmega
+        self.Omega2 = 10**p.logOmega2
+
+        # Adjust flux_mean and flux_std by Omega
+        self.flux_mean *= self.Omega
+        self.flux_std *= self.Omega
+
+        self.flux_mean2 *= self.Omega2
+        self.flux_std2 *= self.Omega2
 
 
 class SampleThetaPhi(Order):
@@ -399,7 +431,6 @@ model.initialize((0,0))
 
 def lnprob_all(p):
     try:
-        #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
         pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5],
             grid2=p[0:3], vz2=p[3], vsini2=p[4], logOmega2=p[5])
         model.update_Theta(pars1)
