@@ -6,10 +6,10 @@ import multiprocessing
 import time
 import numpy as np
 import Starfish
-from Starfish.model import ThetaParam, PhiParam
+from Starfish.model2 import ThetaParam, PhiParam
 
 import argparse
-parser = argparse.ArgumentParser(prog="star_so.py", description="Run Starfish fitting model in single order mode with many walkers.")
+parser = argparse.ArgumentParser(prog="star_veil.py", description="Run Starfish fitting model in single order mode with many walkers, with veiling.")
 parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
@@ -136,6 +136,7 @@ class Order:
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
+        self.Omega = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -170,7 +171,7 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        CC = self.Omega**2 * X.dot(self.C_GP.dot(X.T)) + self.data_mat
 
         try:
             factor, flag = cho_factor(CC)
@@ -180,7 +181,10 @@ class Order:
             raise
 
         try:
-            R = self.fl - self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus)
+            model1 = self.Omega * (self.chebyshevSpectrum.k * self.flux_mean - X.dot(self.mus))
+            model2 = self.Omega * self.veil
+            net_model = model1 + model2
+            R = self.fl - net_model
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -262,11 +266,12 @@ class Order:
         gc.collect()
 
         # Adjust flux_mean and flux_std by Omega
-        Omega = 10**p.logOmega
-        self.flux_mean *= Omega
-        self.flux_std *= Omega
-
-
+        #Omega = 10**p.logOmega
+        #self.flux_mean *= Omega
+        #self.flux_std *= Omega
+        
+        self.Omega = 10**p.logOmega
+        self.veil = p.veil
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
@@ -360,11 +365,15 @@ model = SampleThetaPhi(debug=True)
 model.initialize((0,0))
 
 def lnprob_all(p):
+    if p[10] < 0:
+        return -np.inf
+    if p[6] < 0:
+        return -np.inf
     try:
-        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
+        pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], veil=p[6])
         model.update_Theta(pars1)
         # hard code npoly=3 (for fixc0 = True with npoly=4)
-        pars2 = PhiParam(0, 0, True, p[6:9], p[9], p[10], p[11])
+        pars2 = PhiParam(0, 0, True, p[7:10], p[10], p[11], p[12])
         model.update_Phi(pars2)
         lnp = model.evaluate()
         return lnp
@@ -378,12 +387,12 @@ start = Starfish.config["Theta"]
 fname = Starfish.specfmt.format(model.spectrum_id, model.order) + "phi.json"
 phi0 = PhiParam.load(fname)
 
-ndim, nwalkers = 12, 40
+ndim, nwalkers = 13, 40
 
-p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"]] + 
+p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"], start["veil"]] + 
              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
-p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, -0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
+p0_std = [5, 0.02, 0.02, 0.5, 0.5, -0.01, 0.0001,-0.005, -0.005, -0.005, 0.01, 0.001, 0.5]
 
 if args.resume:
     p0_ball = np.load("emcee_chain.npy")[:,-1,:]
