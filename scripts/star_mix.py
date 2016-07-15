@@ -424,7 +424,7 @@ def lnprior(p):
 # Try to load a user-defined prior
 try:
     sourcepath_env = Starfish.config['Theta_priors']
-    sourcepath = os.path.expandvars(sourcepath)
+    sourcepath = os.path.expandvars(sourcepath_env)
     with open(sourcepath, 'r') as f:
         sourcecode = f.read()
     code = compile(sourcecode, sourcepath, 'exec')
