@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# All of the argument parsing is done in the `parallel.py` module.
 
 import multiprocessing
 import time
@@ -152,20 +151,6 @@ class Order:
         # Update the outdir based upon id
         self.noutdir = Starfish.routdir + "{}/{}/".format(self.spectrum_id, self.order)
 
-
-    def lnprob_Theta(self, p):
-        '''
-        Update the model to the Theta parameters and then evaluate the lnprob.
-
-        Intended to be called from the master process via the command "LNPROB".
-        '''
-        try:
-            self.update_Theta(p)
-            lnp = self.evaluate() # Also sets self.lnprob to new value
-            return lnp
-        except C.ModelError:
-            self.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
-            return -np.inf
 
     def evaluate(self):
         '''
@@ -415,12 +400,7 @@ model = SampleThetaPhi(debug=True)
 
 model.initialize((0,0))
 
-def lnprob_all(p):
-    # Put the prior first.  Require sigAmp to be positive
-    if p[11] < 0:
-        return -np.inf
-    if p[6] > p[0]:
-        return -np.inf
+def lnlike(p):
     # Now we can proceed with the model
     try:
         #pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5])
@@ -435,6 +415,33 @@ def lnprob_all(p):
     except C.ModelError:
         model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
         return -np.inf
+
+
+def lnprior(p):
+    if not ( (p[11] > 0) and (p[6] < p[0]) ):
+        return -np.inf
+
+# Try to load a user-defined prior
+try:
+    sourcepath_env = Starfish.config['Theta_priors']
+    sourcepath = os.path.expandvars(sourcepath)
+    with open(sourcepath, 'r') as f:
+        sourcecode = f.read()
+    code = compile(sourcecode, sourcepath, 'exec')
+    exec(code)
+    lnprior = user_defined_lnprior
+    print("Using the user defined prior in {}".format(sourcepath_env))
+except:
+    pass
+
+
+# Insert the prior here
+def lnprob(p):
+    lp = lnprior(p)
+    if not np.isfinite(lp):
+        return -np.inf
+    return lp + lnlike(p)
+
 
 import emcee
 
@@ -455,7 +462,7 @@ else:
     p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
 n_threads = multiprocessing.cpu_count()
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=n_threads)
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=n_threads)
 
 
 nsteps = args.samples
