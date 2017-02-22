@@ -412,11 +412,12 @@ draws = []
 
 ws = np.load("emcee_chain.npy")
 
-burned = ws[:, 4800:,:]
+burned = ws[:, -200:,:]
 xs, ys, zs = burned.shape
 fc = burned.reshape(xs*ys, zs)
 
 nx, ny = fc.shape
+
 
 #Colorbrewer bands
 s3 = '#fee6ce'
@@ -426,10 +427,21 @@ s1 = '#e6550d'
 wl = model.wl
 data = model.fl
 
+median_vz_shift = np.median(fc[:, 3])
+dlam = median_vz_shift/299792.0*np.median(wl)
+
+# Get the line list of strong lines in Arcturus
+import pandas as pd 
+all_ll = pd.read_csv('/Users/gully/GitHub/ApJdataFrames/data/Rayner2009/tbl7_clean.csv')
+all_ll['wl_A'] = all_ll.wl*10000.0
+
+ll = all_ll[ (all_ll.wl_A > np.min(wl)) & (all_ll.wl_A < np.max(wl)) ] 
+ll = ll.reset_index()
+
 if args.static:
     import json
 
-    n_draws = 20
+    n_draws = 10
     rints = np.random.randint(0, nx, size=n_draws)
 
     draws = []
@@ -449,14 +461,25 @@ if args.static:
 
     fig = plt.figure(figsize=(14, 6))
     ax = plt.axes()
+
+    for j in range(len(ll)):
+        ax.vlines(ll.wl_A[j]+dlam, 0, np.max(1.2*draws[0]), 
+            linestyle='dotted', colors='#AAAAAA')
+        d0 = draws[0]
+        yval = np.max(1.1*draws[0])
+        ax.text(ll.wl_A[j]+dlam, yval, '{}'.format(ll.id[j]), 
+            rotation=90, fontsize=10)
+
     ax.step(wl, data, "b")
     ax.plot(wl, draws[0], "r", alpha=0.5)
     ax.plot(wl, draw_phot1, "g", label='starspot')
     ax.plot(wl, draw_phot2, "y", label='hot photosphere')
+
     for i in range(1, n_draws):
         ax.plot(wl, draws[i], "r", alpha=0.1)
 
     ax.set_ylim(0, np.max(1.2*draws[0]))
+    ax.set_xlim(wl[0], wl[-1])
     ax.set_xlabel(r"$\lambda (\AA)$")
     ax.set_ylabel(r"$f_\lambda$")
     ax.legend(loc="lower right")
@@ -509,18 +532,25 @@ if args.animate:
     Please feel free to use and modify this, but keep the above information. Thanks!
     """
 
-    fig = plt.figure(figsize=(14, 6))
-    ax = plt.axes()
-    ax.set_ylim(0, np.max(1.2*draws[0]))
-    ax.set_xlim(wl[0], wl[-1])
-    ax.plot(wl, data, 'b', lw=2, label='data')
+    import seaborn as sns 
+    sns.set_context('talk', font_scale=1.5)
+    sns.set_style('ticks')
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.step(wl, data, 'k', label='IGRINS order m=121')
+    ax.set_xlim(14800, 14940)
     ax.set_xlabel(r"$\lambda (\AA)$")
-    ax.set_ylabel(r"$f_\lambda$")
+    ax.set_ylim(0, 0.6)
+    #ax.set_yticks([])
+    #ax.set_xticks([])
 
     # First set up the figure, the axis, and the plot element we want to animate
-    line, = ax.plot([], [], 'r', lw=2, label='composite')
-    line1, = ax.plot([], [], 'g', lw=2, label='cool')
-    line2, = ax.plot([], [], 'y', lw=2, label='hot')
+    line, = ax.plot([], [], color='#AA00AA', lw=2, label='Composite')
+    line1, = ax.plot([], [], color='#AA0000', lw=2, label='Starspot')
+    line2, = ax.plot([], [], color='#0000AA', lw=2, label='Ambient')
+
+    plt.legend(loc='upper right')
 
     # initialization function: plot the background of each frame
     def init():
@@ -536,7 +566,6 @@ if args.animate:
         line2.set_data(wl, draws_hot[i])
         return line, line1, line2
 
-    ax.legend(loc="lower right")
 
     # call the animator.  blit=True means only re-draw the parts that have changed.
     anim = animation.FuncAnimation(fig, animate, init_func=init,
@@ -547,5 +576,5 @@ if args.animate:
     # the video can be embedded in html5.  You may need to adjust this for
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
-    anim.save('spec_animation.mp4', fps=10, dpi=300)
+    anim.save('spec_animation_recolored.mp4', fps=10, dpi=300)
 

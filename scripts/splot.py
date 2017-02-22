@@ -79,6 +79,7 @@ if args.matplotlib:
 
     ax[0].set_ylabel(r"$f_\lambda$")
     ax[0].legend(loc="lower right")
+    ax[0].set_ylim(-1, 1)
 
     if args.noise:
         ax[1].fill_between(wl, 3*min_spec, 3*max_spec, zorder=0, color=s3)
