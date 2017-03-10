@@ -198,6 +198,39 @@ class Order:
             raise
 
 
+    def CC_debugger(self, CC):
+        '''
+        Special debugging information for the covariance matrix decomposition.
+        '''
+        print('{:-^60}'.format('CC_debugger'))
+        print("See https://github.com/iancze/Starfish/issues/26")
+        print("Covariance matrix at a glance:")
+        if (CC.diagonal().min() < 0.0):
+            print("- Negative entries on the diagonal:")
+            print("\t- Check sigAmp: should be positive")
+            print("\t- Check uncertainty estimates: should all be positive")
+        elif np.any(np.isnan(CC.diagonal())):
+            print("- Covariance matrix has a NaN value on the diagonal")
+        else:
+            if not np.allclose(CC, CC.T):
+                print("- The covariance matrix is highly asymmetric")
+
+            #Still might have an asymmetric matrix below `allclose` threshold
+            evals_CC, evecs_CC = np.linalg.eigh(CC)
+            n_neg = (evals_CC < 0).sum()
+            n_tot = len(evals_CC)
+            print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
+            mark = lambda val: '>' if val < 0 else '.'
+
+            print("Covariance matrix eigenvalues:")
+            print(*["{: >6} {:{fill}>20.3e}".format(i, evals_CC[i], 
+                                                    fill=mark(evals_CC[i])) for i in range(10)], sep='\n')
+            print('{: >15}'.format('...'))
+            print(*["{: >6} {:{fill}>20.3e}".format(n_tot-10+i, evals_CC[-10+i], 
+                                                   fill=mark(evals_CC[-10+i])) for i in range(10)], sep='\n')
+        print('{:-^60}'.format('-'))
+
+
     def update_Theta(self, p):
         '''
         Update the model to the current Theta parameters.
@@ -364,11 +397,8 @@ model = SampleThetaPhi(debug=True)
 
 model.initialize((0,0))
 
-def lnprob_all(p):
-    if p[10] < 0:
-        return -np.inf
-    if p[6] < 0:
-        return -np.inf
+def lnlike(p):
+    # Now we can proceed with the model
     try:
         pars1 = ThetaParam(grid=p[0:3], vz=p[3], vsini=p[4], logOmega=p[5], veil=p[6])
         model.update_Theta(pars1)
@@ -380,6 +410,37 @@ def lnprob_all(p):
     except C.ModelError:
         model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
         return -np.inf
+
+
+def lnprior(p):
+    print(p[12])
+    if not ( p[12] > 0):
+        return -1.0*np.inf
+
+
+
+# Try to load a user-defined prior
+try:
+    sourcepath_env = Starfish.config['Theta_priors']
+    sourcepath = os.path.expandvars(sourcepath_env)
+    with open(sourcepath, 'r') as f:
+        sourcecode = f.read()
+    code = compile(sourcecode, sourcepath, 'exec')
+    exec(code)
+    lnprior = user_defined_lnprior
+    print("Using the user defined prior in {}".format(sourcepath_env))
+except:
+    pass
+
+
+# Insert the prior here
+def lnprob(p):
+    #print(p)
+    lp = lnprior(p)
+    if not np.isfinite(lp):
+        return -1.0*np.inf
+    return lp + lnlike(p)
+
 
 import emcee
 
@@ -400,7 +461,7 @@ else:
     p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
 n_threads = multiprocessing.cpu_count()
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob_all, threads=n_threads)
+sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=n_threads)
 
 
 nsteps = args.samples
