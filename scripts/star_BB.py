@@ -31,8 +31,6 @@ from numpy.linalg import slogdet
 from astropy.stats import sigma_clip
 from astropy.analytic_functions import blackbody_lambda
 from astropy import units as u
-from astropy import constants as const
-
 
 import gc
 import logging
@@ -56,8 +54,6 @@ spectra_keys = np.arange(len(DataSpectra))
 
 #Instruments are provided as one per dataset
 Instruments = [eval("Starfish.grid_tools." + inst)() for inst in Starfish.data["instruments"]]
-
-stef_boltz = const.sigma_sb.to(u.erg/u.s/u.cm**2/u.K**4).value #cgs
 
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s", filename="{}log.log".format(
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -315,16 +311,10 @@ class Order:
         gc.collect()
 
         F_bol1 = self.F_bol_interp.interp(p.grid)
-        F_bol2 = stef_boltz * p.T_BB**4.0 ## Radiance from black body
-        self.qq = F_bol2/F_bol1[0]
-        # Adjust flux_mean and flux_std by Omega
-        #Omega = 10**p.logOmega
-        #self.flux_mean *= Omega
-        #self.flux_std *= Omega
+        self.qq = C.F_sun/F_bol1[0]
 
-        self.BB_lam = blackbody_lambda(self.wl, p.T_BB)
-        
-        self.Omega = 10**p.logOmega
+        this_BB_lam = blackbody_lambda(self.wl, p.T_BB)
+        self.BB_lam = this_BB_lam.to(u.erg/(u.s*(u.cm**2)*u.Angstrom*u.sr))*np.pi*u.sr
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
