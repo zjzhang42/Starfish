@@ -74,7 +74,7 @@ class PCAGrid:
     Create and query eigenspectra.
     '''
 
-    def __init__(self, wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams):
+    def __init__(self, wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams, flux_scalars):
         '''
 
         :param wl: wavelength array
@@ -91,6 +91,8 @@ class PCAGrid:
         :type w: 2D np.array (m, M)
         :param gparams: The stellar parameters of the synthetic library
         :type gparams: 2D array of parameters (nspec, nparam)
+        :param flux_scalar: scalar average of each spectrum
+        :type flux_scalar: 1D np.array (M)
 
         '''
         self.wl = wl
@@ -98,6 +100,7 @@ class PCAGrid:
         self.flux_mean = flux_mean
         self.flux_std = flux_std
         self.eigenspectra = eigenspectra
+        self.flux_scalars = flux_scalars
         self.m = len(self.eigenspectra)
         self.w = w
         self.w_hat = w_hat
@@ -136,7 +139,8 @@ class PCAGrid:
 
         # Normalize all of the fluxes to an average value of 1
         # In order to remove uninteresting correlations
-        fluxes = fluxes/np.average(fluxes, axis=1)[np.newaxis].T
+        flux_scalars = np.average(fluxes, axis=1)
+        fluxes = fluxes/flux_scalars[np.newaxis].T
 
         # Subtract the mean from all of the fluxes.
         flux_mean = np.average(fluxes, axis=0)
@@ -184,7 +188,7 @@ class PCAGrid:
         # Calculate w_hat, Eqn 20 Habib
         w_hat = get_w_hat(eigenspectra, fluxes, M)
 
-        return cls(wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams)
+        return cls(wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams,flux_scalars)
 
     def write(self, filename=Starfish.PCA["path"]):
         '''
@@ -207,6 +211,9 @@ class PCAGrid:
         pdset[1,:] = self.flux_mean
         pdset[2,:] = self.flux_std
         pdset[3:, :] = self.eigenspectra
+
+        scalarset = hdf5.create_dataset("flux_scalars", (self.M,), compression='gzip', dtype="f8", compression_opts=9)
+        scalarset[:] = self.flux_scalars
 
         wdset = hdf5.create_dataset("w", (self.m, self.M), compression='gzip',
             dtype="f8", compression_opts=9)
@@ -244,13 +251,16 @@ class PCAGrid:
         wdset = hdf5["w"]
         w = wdset[:]
 
+        scalarset = hdf5["flux_scalars"]
+        flux_scalars = scalarset[:]
+
         w_hatdset = hdf5["w_hat"]
         w_hat = w_hatdset[:]
 
         gdset = hdf5["gparams"]
         gparams = gdset[:]
 
-        pcagrid = cls(wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams)
+        pcagrid = cls(wl, dv, flux_mean, flux_std, eigenspectra, w, w_hat, gparams, flux_scalars)
         hdf5.close()
 
         return pcagrid
@@ -327,36 +337,6 @@ class PCAGrid:
 
         return recon_fluxes
 
-
-class F_bol_interp:
-    '''
-    Interpolate the F_bol from the grid for any arbitrary stellar parameter
-    '''
-    def __init__(self, GridInterface):
-        '''
-        Provide the emulation products.
-
-        :param pca: object storing the principal components, the eigenpsectra
-        :type pca: PCAGrid
-        :param eparams: Optimized GP hyperparameters.
-        :type eparams: 1D np.array
-        '''
-        
-        myHDF5 = HDF5Interface()
-        n_gps, n_dims = myHDF5.grid_points.shape
-        F_bol = np.zeros(n_gps)
-        for i in range(n_gps):
-            _, hdr = myHDF5.load_flux_hdr(myHDF5.grid_points[i])
-            F_bol[i] = hdr["F_bol"]
-        X_grid = myHDF5.grid_points
-        y_dat = F_bol
-        ld = LinearNDInterpolator(X_grid, y_dat)
-        self.ld = ld
-
-    def interp(self, grid_pars):
-        return self.ld(grid_pars)
-
-
 class Emulator:
     def __init__(self, pca, eparams):
         '''
@@ -384,12 +364,17 @@ class Emulator:
 
         self.V11 = self.iPhiPhi + Sigma(self.pca.gparams, self.h2params)
 
+        self.ld = LinearNDInterpolator(self.pca.gparams, self.pca.flux_scalars)
+
         self._params = None # Where we want to interpolate
 
         self.V12 = None
         self.V22 = None
         self.mu = None
         self.sig = None
+
+        # New in v0.3: absolute flux scalar
+        self.flux_scalar = None
 
     @classmethod
     def open(cls, filename=Starfish.PCA["path"]):
@@ -437,9 +422,16 @@ class Emulator:
         self.mu.shape = (-1)
         self.sig = self.V22 - self.V12.T.dot(np.linalg.solve(self.V11, self.V12))
 
+        # Calculate the flux_scalar
+        self.flux_scalar = self.ld(self._params)
+
     @property
     def matrix(self):
         return (self.mu, self.sig)
+
+    @property
+    def absolute_flux(self):
+        return self.flux_scalar
 
     def draw_many_weights(self, params):
         '''
