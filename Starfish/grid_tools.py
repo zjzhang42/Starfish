@@ -14,6 +14,8 @@ import h5py
 from functools import partial
 import itertools
 from collections import OrderedDict
+import pandas as pd
+import astropy.units as u
 
 import Starfish
 from .spectrum import create_log_lam_grid, calculate_dv, calculate_dv_dict
@@ -163,6 +165,98 @@ class RawGridInterface:
         '''
         pass
 
+class MarleyGridInterface(RawGridInterface):
+    '''
+    An Interface to the 2017 Marley and collaborators synthetic library.
+
+    :param norm: normalize the spectrum to solar luminosity?
+    :type norm: bool
+
+    '''
+    def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
+        base=os.path.expandvars(Starfish.grid["raw_path"])):
+
+        super().__init__(name="Marley", param_names = ["temp", "logg"], 
+            points = [np.array([500, 525, 550, 575, 600, 650, 700, 750, 800, 
+            850, 900, 950,  1000]), np.arange(4.0, 5.51, 0.25)],
+            air=air, wl_range=wl_range, base=base)
+
+        self.norm = norm #Deprecated
+        self.par_dicts = [None,
+                          {4.0:"100",4.25:"178",4.5:"316",4.75:"562",
+                           5.0:"1000",5.25:"1780",5.5:"3160"}]
+
+        self.base = os.path.expandvars(self.base)
+        # if air is true, convert the normally vacuum file to air wls.
+        try:
+            dat = pd.read_csv(self.base + '/sp_t1000g1000nc_m0.0', 
+                      names=['wavelength', 'flux'], skiprows=3, 
+                      delim_whitespace=True)
+        except OSError:
+            raise C.GridError("Wavelength file improperly specified.")
+
+        # Wavelength in Angstroms, increasing
+        w_full = 10000.0*dat.wavelength[::-1].values 
+        
+        if self.air:
+            self.wl_full = vacuum_to_air(w_full)
+        else:
+            self.wl_full = w_full
+
+        self.ind = (self.wl_full >= self.wl_range[0]) & (self.wl_full <= self.wl_range[1])
+        self.wl = self.wl_full[self.ind]
+        self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m0.0"
+
+    def load_flux(self, parameters, norm=True):
+        '''
+       Load just the flux and header information.
+
+       :param parameters: stellar parameters
+       :type parameters: np.array
+
+       :raises C.GridError: if the file cannot be found on disk.
+
+       :returns: tuple (flux_array, header_dict)
+
+       '''
+        self.check_params(parameters) # Check to make sure that the keys are
+        # allowed and that the values are in the grid
+
+        # Create a list of the parameters to be fed to the format string
+        # optionally replacing arguments using the dictionaries, if the formatting
+        # of a certain parameter is tricky
+        str_parameters = []
+        for param, par_dict in zip(parameters, self.par_dicts):
+            if par_dict is None:
+                str_parameters.append(param)
+            else:
+                str_parameters.append(par_dict[param])
+
+        fname = self.rname.format(*str_parameters)
+
+        #Still need to check that file is in the grid, otherwise raise a C.GridError
+        #Read all metadata in from the FITS header, and append to spectrum
+        try:
+            dat = pd.read_csv(fname, names=['wavelength', 'flux'], 
+                    skiprows=3, delim_whitespace=True)
+            f = dat.flux[::-1].values
+        except OSError:
+            raise C.GridError("{} is not on disk.".format(fname))
+        
+        x = dat.wavelength.values*u.micron
+        f = (f*u.erg/u.cm**2/u.s/u.Hz).to(
+             u.erg/u.cm**2/u.s/u.Angstrom, 
+             equivalencies=u.spectral_density(x))
+        f = f.value
+        f /= np.pi # convert to erg/cm^2/s/A/steradian
+
+        #Add temp, logg, Z, alpha, norm to the metadata
+        header = {}
+        header["norm"] = self.norm
+        header["air"] = self.air
+
+        return (f[self.ind], header)
+
 class PHOENIXGridInterface(RawGridInterface):
     '''
     An Interface to the PHOENIX/Husser synthetic library.
@@ -256,9 +350,11 @@ class PHOENIXGridInterface(RawGridInterface):
 
         #If we want to normalize the spectra, we must do it now since later we won't have the full EM range
         if self.norm:
+            # Normalization functionality has been updated as of v0.3
+            # See discussion in Issue # 38:
+            # https://github.com/iancze/Starfish/issues/38
             f *= 1e-8 #convert from erg/cm^2/s/cm to erg/cm^2/s/A
-            F_bol = trapz(f, self.wl_full)
-            f = f * (C.F_sun / F_bol) #bolometric luminosity is always 1 L_sun
+            f /= np.pi # convert to erg/cm^2/s/A/steradian
 
         #Add temp, logg, Z, alpha, norm to the metadata
         header = {}
@@ -268,9 +364,6 @@ class PHOENIXGridInterface(RawGridInterface):
         for key, value in hdr.items():
             if key[:3] == "PHX":
                 header[key] = value
-        #Add an F_bol keyword if the spectra are normalized
-        if self.norm:
-            header["F_bol"] = F_bol
 
         return (f[self.ind], header)
 
@@ -1036,6 +1129,12 @@ class SPEX_SXD(Instrument):
     def __init__(self, name="SPEX", FWHM=150., wl_range=(7500, 26000)):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
 
+class SPEX_PRZ(Instrument):
+    '''SPEX Instrument short mode'''
+    def __init__(self, name="SPEX_PRZ", FWHM=2300., wl_range=(7500, 26000)):
+        super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
+        self.air = False
+
 class IGRINS_H(Instrument):
     '''IGRINS H band instrument'''
     def __init__(self, name="IGRINS_H", FWHM=7.5, wl_range=(14250, 18400)):
@@ -1047,6 +1146,17 @@ class IGRINS_K(Instrument):
     def __init__(self, name="IGRINS_K", FWHM=7.5, wl_range=(18500, 25200)):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
         self.air = False
+
+class iSHELL_H(Instrument):
+    '''IGRINS H band instrument'''
+    def __init__(self, name="IGRINS_H", FWHM=3.5, wl_range=(16400, 18200)):
+        super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
+        self.air = False
+
+class NIRSPEC_LO_F7(Instrument):
+    '''NIRSPEC Filter 7 low res band instrument'''
+    def __init__(self, name="NIRSPEC_LO_F7", FWHM=150, wl_range=(18390, 26300)):
+        super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
 
 class ESPaDOnS(Instrument):
     '''ESPaDOnS Instrument'''
