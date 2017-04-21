@@ -243,7 +243,7 @@ class MarleyGridInterface(RawGridInterface):
         except OSError:
             raise C.GridError("{} is not on disk.".format(fname))
         
-        x = dat.wavelength.values*u.micron
+        x = dat.wavelength[::-1].values*u.micron
         f = (f*u.erg/u.cm**2/u.s/u.Hz).to(
              u.erg/u.cm**2/u.s/u.Angstrom, 
              equivalencies=u.spectral_density(x))
