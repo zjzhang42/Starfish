@@ -19,7 +19,6 @@ import os
 import Starfish.grid_tools
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
-from Starfish.emulator import F_bol_interp
 import Starfish.constants as C
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 
@@ -118,7 +117,6 @@ class Order:
 
         self.emulator = Emulator.open()
         self.emulator.determine_chunk_log(self.wl)
-        self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
 
         self.pca = self.emulator.pca
 
@@ -134,6 +132,8 @@ class Order:
         self.eigenspectra = np.empty((self.pca.m, self.ndata))
         self.flux_mean = np.empty((self.ndata,))
         self.flux_std = np.empty((self.ndata,))
+        self.flux_scalar = None
+        self.flux_scalar2 = None
 
         self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
         self.mus, self.C_GP, self.data_mat = None, None, None
@@ -141,7 +141,6 @@ class Order:
         #self.ff = None
         self.Omega = None
         self.Omega2 = None
-        self.qq = None
 
         self.lnprior = 0.0 # Modified and set by NuisanceSampler.lnprob
 
@@ -162,8 +161,8 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        part1 = self.Omega**2 * X.dot(self.C_GP.dot(X.T))
-        part2 = self.Omega2**2 * X.dot(self.C_GP2.dot(X.T))
+        part1 = self.Omega**2 * self.flux_scalar**2 * X.dot(self.C_GP.dot(X.T))
+        part2 = self.Omega2**2 * self.flux_scalar2**2 * X.dot(self.C_GP2.dot(X.T))
         part3 = self.data_mat
         
         #CC = X.dot(self.C_GP.dot(X.T)) + self.data_mat
@@ -177,8 +176,8 @@ class Order:
             raise
 
         try:
-            model1 = self.Omega * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
-            model2 = self.Omega2 * self.qq * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
+            model1 = self.Omega * self.flux_scalar *(self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            model2 = self.Omega2 * self.flux_scalar2 * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus2))
             net_model = model1 + model2
             R = self.fl - net_model
 
@@ -294,11 +293,6 @@ class Order:
         # to clear allocated memory for each iteration.
         gc.collect()
 
-        # Determine the F_bol ratio
-        F_bol1 = self.F_bol_interp.interp(p.grid)
-        F_bol2 = self.F_bol_interp.interp(np.append(p.teff2, p.grid[1:]))
-        self.qq = F_bol2[0]/F_bol1[0]
-
         # Adjust flux_mean and flux_std by Omega
         #Omega = 10**p.logOmega
         #self.flux_mean *= Omega
@@ -308,9 +302,11 @@ class Order:
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
+        self.flux_scalar = self.emulator.absolute_flux
         self.emulator.params = np.append(p.teff2, p.grid[1:])
         #self.emulator.params = np.append(6132.0, p.grid[1:])
         self.mus2, self.C_GP2 = self.emulator.matrix
+        self.flux_scalar2 = self.emulator.absolute_flux
         self.Omega = 10**p.logOmega
         self.Omega2 = 10**p.logOmega2
 
@@ -454,7 +450,7 @@ ndim, nwalkers = 14, 40
 p0 = np.array(start["grid"] + [start["vz"], start["vsini"], start["logOmega"], start["teff2"], start["logOmega2"]] + 
              phi0.cheb.tolist() + [phi0.sigAmp, phi0.logAmp, phi0.l])
 
-p0_std = [5, 0.02, 0.02, 0.5, 0.5, 0.01, 5, 0.01, 0.005, 0.005, 0.005, 0.01, 0.001, 0.5]
+p0_std = [5, 0.02, 0.005, 0.5, 0.5, 0.01, 5, 0.01, 0.005, 0.005, 0.005, 0.01, 0.001, 0.5]
 
 if args.resume:
     p0_ball = np.load("emcee_chain.npy")[:,-1,:]
