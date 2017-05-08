@@ -165,6 +165,7 @@ class RawGridInterface:
         '''
         pass
 
+
 class MarleyGridInterface(RawGridInterface):
     '''
     An Interface to the 2017 Marley and collaborators synthetic library.
@@ -248,7 +249,7 @@ class MarleyGridInterface(RawGridInterface):
              u.erg/u.cm**2/u.s/u.Angstrom, 
              equivalencies=u.spectral_density(x))
         f = f.value
-        f /= np.pi # convert to erg/cm^2/s/A/steradian
+        f = f/np.pi # convert to erg/cm^2/s/A/steradian
 
         #Add temp, logg, Z, alpha, norm to the metadata
         header = {}
@@ -256,6 +257,45 @@ class MarleyGridInterface(RawGridInterface):
         header["air"] = self.air
 
         return (f[self.ind], header)
+
+class MarleyDec2010GridInterface(MarleyGridInterface):
+    '''
+    An Interface to the 2017 Marley and collaborators synthetic library.
+
+    :param norm: normalize the spectrum to solar luminosity?
+    :type norm: bool
+
+    '''
+    pass
+
+
+class MarleyMay2017GridInterface(MarleyGridInterface):
+    '''
+    An Interface to the 2017 Marley and collaborators synthetic library.
+
+    :param norm: normalize the spectrum to solar luminosity?
+    :type norm: bool
+
+    '''
+    def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
+        base=os.path.expandvars(Starfish.grid["raw_path"])):
+
+        #There's probably a more elegant inheritance way to do this...
+        super().__init__(air=air, norm=norm, wl_range=wl_range,
+        base=base)
+
+        self.name="MarleyMay2017"
+        self.param_names = ["temp", "logg"]
+        self.points = [np.array([200, 225, 250, 300, 325, 350, 375, 400, 
+        425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 
+        850, 900, 950,  1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700,
+        1800, 1900, 2000, 2100, 2200, 2400]), np.arange(3.25, 5.51, 0.25)]
+
+        self.par_dicts = [None,
+                          {3.25:"17", 3.5:"31", 3.75:"56",
+                           4.0:"100",4.25:"178",4.5:"316",4.75:"562",
+                           5.0:"1000",5.25:"1780",5.5:"3160"}]
+        
 
 class PHOENIXGridInterface(RawGridInterface):
     '''
@@ -674,7 +714,8 @@ class HDF5Creator:
         # Instrumentally broaden the spectrum by multiplying with a Gaussian in Fourier space
         self.taper = np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (self.ss ** 2))
 
-        self.ss[0] = 0.01 # junk so we don't get a divide by zero error
+        ##This seems to be a problem:
+        #self.ss[0] = 0.01 # junk so we don't get a divide by zero error
 
         # The final wavelength grid, onto which we will interpolate the
         # Fourier filtered wavelengths, is part of the Instrument object
@@ -742,14 +783,29 @@ class HDF5Creator:
 
             else:
                 # apply just instrumental taper
-                FF_tap = FF * self.taper
 
-            # do IFFT
-            fl_tapered = np.fft.irfft(FF_tap)
+                if self.Instrument.name == 'SPEX_PRZ':
+                    #Need a wavelength dependent taper.
+                    fl_final = self.wl_final*0.0
+                    for j in range(len(self.wl_final)//8):
+                        R_est = np.mean(self.Instrument.res_gradient()(self.wl_final[8*j:8*j+8]))
+                        sigma = 299792.46/R_est / 2.35 # in km/s
+                        # Instrumentally broaden the spectrum by multiplying with a Gaussian in Fourier space
+                        taper = np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (self.ss ** 2))
+                        FF_tap = FF * taper
+                        fl_tapered = np.fft.irfft(FF_tap)
+                        interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
+                        fl_final[8*j:8*j+8] = interp(self.wl_final[8*j:8*j+8])
+                else:
+                    FF_tap = FF * self.taper
 
-            # downsample to the final grid
-            interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
-            fl_final = interp(self.wl_final)
+                    # do IFFT
+                    fl_tapered = np.fft.irfft(FF_tap)
+
+                    # downsample to the final grid
+                    interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
+                    fl_final = interp(self.wl_final)
+                    
             del interp
             gc.collect()
 
@@ -1131,9 +1187,22 @@ class SPEX_SXD(Instrument):
 
 class SPEX_PRZ(Instrument):
     '''SPEX Instrument short mode'''
-    def __init__(self, name="SPEX_PRZ", FWHM=2300., wl_range=(7500, 26000)):
+    # FWHM = 1070 is R~280, the max value for 0.5" slit
+    def __init__(self, name="SPEX_PRZ", FWHM=1070., wl_range=(6500, 27000)):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
         self.air = False
+
+    def res_gradient(self):
+        '''Returns a R(lambda) function for SpeX Prism_mode'''
+        # assumes an 0.5'' as slit
+        # Beware-- The most common is actually an 0.8'' slit.
+        filename = os.path.expandvars('$Starfish/data/SpeX/SpeX_PRZ_resolution_0p5as_slit.csv')
+        res_dat = pd.read_csv(filename)
+        R_lambda = res_dat.resolution_R.values
+        lambda_A = res_dat.wavelength_um.values*10000.0
+        f_out = interp1d(lambda_A, R_lambda, fill_value="extrapolate", bounds_error=False)
+        return f_out
+
 
 class IGRINS_H(Instrument):
     '''IGRINS H band instrument'''
