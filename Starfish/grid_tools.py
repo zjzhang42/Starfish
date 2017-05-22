@@ -1224,7 +1224,13 @@ class iSHELL_H(Instrument):
 
 class NIRSPEC_LO_F7(Instrument):
     '''NIRSPEC Filter 7 low res band instrument'''
-    def __init__(self, name="NIRSPEC_LO_F7", FWHM=150, wl_range=(18390, 26300)):
+    # Note-- resolution should be 1250, so ~239 km/s FWHM.
+    def __init__(self, name="NIRSPEC_LO_F7", FWHM=240, wl_range=(18390, 26300)):
+        super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
+
+class JWST_NIRSPEC_G235M(Instrument):
+    '''JWST NIRSpec G235M instrument'''
+    def __init__(self, name="JWST_NIRSPEC_G235M", FWHM=300, wl_range=(16000, 31000)):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
 
 class ESPaDOnS(Instrument):
