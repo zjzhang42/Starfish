@@ -2,8 +2,18 @@
 #
 # download PHOENIX HiRes model spectra (enlightened by Ian Czekala)
 # could work on the bigmac (bigmac => Dropbox => local)
-#
 # PHOENIX: ftp://phoenix.astro.physik.uni-goettingen.de/HiResFITS/
+#
+#
+# Instructions:
+# >>> bigmac
+# >>> screen
+# ... run this bash script
+# ... Ctrl+a+d <detach screen>
+# hiking & beach & surfing
+# >>> screen -r <re-attach to the screen>
+# ... Ctrl+a+d <detach screen>
+# #--
 #
 ##########################################
 ## Author: ZJ Zhang (zhoujian@hawaii.edu)
