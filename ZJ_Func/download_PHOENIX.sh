@@ -1,12 +1,13 @@
 #!/bin/bash
 #
 # download PHOENIX HiRes model spectra (enlightened by Ian Czekala)
-# could work on the bigmac (bigmac => Dropbox => local)
+# could work on the bigmac/westfield (bigmac/westfield => Dropbox => local)
 # PHOENIX: ftp://phoenix.astro.physik.uni-goettingen.de/HiResFITS/
 #
 #
 # Instructions:
-# >>> bigmac
+# >>> scp download_PHOENIX.sh bigmac/westfield:/path/ 
+# >>> bigmac / westfield
 # >>> screen
 # ... run this bash script
 # ... Ctrl+a+d <detach screen>
@@ -22,10 +23,15 @@
 
 ####### MODIFICATION HISTORY:
 #
+# ZJ Zhang (Jul. 06th, 2017)
+#
 #############################
 
-### 1. Setting Download directory
+### this is what you need to revise every time when you use this bash script (DIRECTORY is a relative path!)
 DIRECTORY="Spec_Lib/Spec_for_Starfish/libraries/raw/PHOENIX/"
+
+
+### 1. Setting Download directory
 # Check to see if the directory exists, if not, make one -
 if [ ! -d "$DIRECTORY" ]; then
     echo $DIRECTORY does not exist, creating.
@@ -40,7 +46,7 @@ cd $DIRECTORY
 wget -r --no-parent ftp://phoenix.astro.physik.uni-goettingen.de/HiResFITS/
 # --
 
-### 3. Move PHOENIX folder to the target place
+### 3. Move PHOENIX folder to the target workplace
 # could do it by hand
 # --
 
