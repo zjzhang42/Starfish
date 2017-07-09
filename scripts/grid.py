@@ -40,7 +40,7 @@ if args.create:
 if args.plot:
 
     # Check to make sure the file exists
-    
+
     import os
     hdf5_path = os.path.expandvars(Starfish.grid["hdf5_path"])
     if not os.path.exists(hdf5_path):
@@ -70,6 +70,7 @@ if args.plot:
 
     p = mp.Pool(mp.cpu_count())
     p.map(plot, par_fluxes)
+
 
 if args.pcreate:
 
