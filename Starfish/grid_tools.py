@@ -1,3 +1,13 @@
+## Author: I. Czekala
+#
+# Modification History:
+#
+# M. Gully (2015-2017)
+# ZJ Zhang (Jul. 20th, 2017)   [REVISE --- "class SPEX_PRZ(Instrument)"]
+#
+#################################################
+
+
 import numpy as np
 from numpy.fft import fft, ifft, fftfreq, rfftfreq
 from astropy.io import ascii,fits
@@ -1186,7 +1196,7 @@ class SPEX_SXD(Instrument):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
 
 class SPEX_PRZ(Instrument):
-    '''SPEX Instrument short mode'''
+    '''SPEX Instrument PRZ mode'''
     # FWHM = 1070 is R~280, the max value for 0.5" slit
     def __init__(self, name="SPEX_PRZ", FWHM=1070., wl_range=(6500, 27000)):
         super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
@@ -1196,9 +1206,9 @@ class SPEX_PRZ(Instrument):
         '''Returns a R(lambda) function for SpeX Prism_mode'''
         # assumes an 0.5'' as slit
         # Beware-- The most common is actually an 0.8'' slit.
-        filename = os.path.expandvars('$Starfish/data/SpeX/SpeX_PRZ_resolution_0p5as_slit.csv')
+        filename = os.path.expandvars('$Starfish/ZJ_Func/data/res_gradient/IRTF_SpeX_PRZ_03/SpeX_PRZ_03.csv')
         res_dat = pd.read_csv(filename)
-        R_lambda = res_dat.resolution_R.values
+        R_lambda = res_dat.resolution_R.values * (0.3/0.5)  # load resolution values and scale them to a 0.5" slit
         lambda_A = res_dat.wavelength_um.values*10000.0
         f_out = interp1d(lambda_A, R_lambda, fill_value="extrapolate", bounds_error=False)
         return f_out
