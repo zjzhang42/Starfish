@@ -1,4 +1,15 @@
 #!/usr/bin/env python
+#
+#
+## Author: I. Czekala
+#
+# Modification History:
+#
+# M. Gully (2015-2017)
+# ZJ Zhang (Jul. 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
+#
+#################################################
+
 
 import argparse
 parser = argparse.ArgumentParser(description="Create and manipulate a PCA decomposition of the synthetic spectral library.")
@@ -233,10 +244,10 @@ if args.plot == "emcee":
     #Make a triangle plot of the samples
     my_pca = emulator.PCAGrid.open()
     flatchain = np.load("eparams_emcee.npy")
-    try:  # line added by ZJ (20170710) - start
+    try:
         import corner as triangle
     except:
-        import triangle  # line added by ZJ (20170710) - end
+        import triangle
 
     # figure out how many separate triangle plots we need to make
     npar = len(Starfish.parname) + 1
