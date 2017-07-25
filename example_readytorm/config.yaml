@@ -1,0 +1,71 @@
+# YAML configuration script
+
+name: GJ570D
+
+data:
+  grid_name: "MarleyMay2017"
+  infiles: ["data/GJ570D/GJ570D_SPEX_PRZ.ascii"]
+  files: ["data/GJ570D/GJ570D_SPEX_PRZ.hdf5"]
+  instruments : ["SPEX_PRZ"]
+  orders: [0]
+
+outdir : output/
+
+plotdir : plots/
+
+# The parameters defining your raw spectral library live here.
+grid:
+  raw_path: "/Users/zhang-dirac/Dropbox/Laniakea/ZhangDirac/OtherWorlds/Spec_Lib/Spec_for_Starfish/libraries/raw/Marley13/"
+  hdf5_path: "libraries/MarleyMay2017_SPEX_PRZ_GJ570D.hdf5"
+  parname: ["temp", "logg"]
+  key_name: "t{0:.0f}g{1:.1f}" # Specifies how the params are stored
+  # in the HDF5 file
+  parrange: [[650, 900], [4.5, 5.5]]
+  wl_range: [6500, 26000]
+  buffer: 50. # AA
+
+PCA:
+  path : "libraries/MarleyMay2017_SPEX_PRZ_GJ570D_PCA.hdf5"
+  threshold: 0.999 # Percentage of variance explained by components.
+  priors: [[2., 0.0075], [2., 0.75]] # len(parname) list of 2-element lists. Each 2-element list is [s, r] for the Gamma-function prior on emulator parameters
+
+#Longer strings can be written like this. This will be loaded under the "Comments" variable.
+Comments: >
+  GJ570D spectrum using emulator.
+
+# The parameters shared between all orders
+Theta :
+    grid : [760., 4.8]
+    vz : 5.0
+    vsini : 5.0
+    logOmega: -18.927
+    Av: 0.0
+
+# Uncomment this line and set equal to the value of logg, if you'd like to fix it.
+# fix_logg : 5.09
+
+Theta_jump :
+    grid : [4, 0.002]
+    vz : 0.05
+    vsini : 0.05
+    logOmega: 1.e-4
+    Av: 0.01
+
+cheb_degree: 4
+cheb_jump : 1.0e-3
+
+Phi :
+    sigAmp : 10.0
+    logAmp : -12.0
+    l : 1.0
+
+Phi_jump :
+    sigAmp : 0.25
+    logAmp : 0.01
+    l : 0.025
+
+region_params:
+logAmp: -13.6
+sigma: 7.
+
+sigma_clip : 4. # how many sigma should we go in order to instantiate local kernels.
