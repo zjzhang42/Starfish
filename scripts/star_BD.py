@@ -188,16 +188,31 @@ class Order:
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
         CC = self.Omega**2 * self.flux_scalar**2 * X.dot(self.C_GP.dot(X.T)) + self.data_mat
+        '''
+            what's wrong with self.C_GP?
+            '''
+        print("\n\nZJ's test begin")
+        matrix = self.data_mat
+        # diagonal elements:
+        print("negative elements?")
+        print(CC.diagonal().min() < 0.0)
+        print("\n")
+        evals_CC, evecs_CC = np.linalg.eigh(CC)
+        n_neg = (evals_CC < 0).sum()
+        n_tot = len(evals_CC)
+        print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
+        print("ZJ's test finished\n\n")
+
 
         try:
             factor, flag = cho_factor(CC)
         except np.linalg.linalg.LinAlgError:
             print("Spectrum:", self.spectrum_id, "Order:", self.order)
-            # self.CC_debugger(CC)
+            self.CC_debugger(CC)
             raise
 
         try:
-            R = self.fl - self.Omega * self.flux_scalar *(self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            R = self.fl - self.Omega * self.flux_scalar * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -209,6 +224,36 @@ class Order:
         except np.linalg.linalg.LinAlgError:
             print("Spectrum:", self.spectrum_id, "Order:", self.order)
             raise
+
+    def CC_debugger(self, CC):
+        '''
+        Special debugging information for the covariance matrix decomposition.
+        '''
+        print('{:-^60}'.format('CC_debugger'))
+        print("See https://github.com/iancze/Starfish/issues/26")
+        print("Covariance matrix at a glance:")
+        if (CC.diagonal().min() < 0.0):
+            print("- Negative entries on the diagonal:")
+            print("\t- Check sigAmp: should be positive")
+            print("\t- Check uncertainty estimates: should all be positive")
+        elif np.any(np.isnan(CC.diagonal())):
+            print("- Covariance matrix has a NaN value on the diagonal")
+        else:
+            if not np.allclose(CC, CC.T):
+                print("- The covariance matrix is highly asymmetric")
+
+            #Still might have an asymmetric matrix below `allclose` threshold
+            evals_CC, evecs_CC = np.linalg.eigh(CC)
+            n_neg = (evals_CC < 0).sum()
+            n_tot = len(evals_CC)
+            print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
+            mark = lambda val: '>' if val < 0 else '.'
+                                                                                
+            print("Covariance matrix eigenvalues:")
+            print(*["{: >6} {:{fill}>20.3e}".format(i, evals_CC[i], fill=mark(evals_CC[i])) for i in range(10)], sep='\n')
+            print('{: >15}'.format('...'))
+            print(*["{: >6} {:{fill}>20.3e}".format(n_tot-10+i, evals_CC[-10+i], fill=mark(evals_CC[-10+i])) for i in range(10)], sep='\n')
+        print('{:-^60}'.format('-'))
 
 
     def update_Theta(self, p):
@@ -277,11 +322,6 @@ class Order:
         # Helps keep memory usage low, seems like the numpy routine is slow
         # to clear allocated memory for each iteration.
         gc.collect()
-
-        # Adjust flux_mean and flux_std by Omega
-        # Omega = 10**p.logOmega
-        # self.flux_mean *= Omega
-        # self.flux_std *= Omega
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
@@ -466,18 +506,6 @@ def lnprior(p):
         return -np.inf
     else:
         return 0
-# Try to load a user-defined prior
-try:
-    sourcepath_env = Starfish.config['Theta_priors']
-    sourcepath = os.path.expandvars(sourcepath_env)
-    with open(sourcepath, 'r') as f:
-        sourcecode = f.read()
-    code = compile(sourcecode, sourcepath, 'exec')
-    exec(code)
-    lnprior = user_defined_lnprior
-    print("Using the user defined prior in {}".format(sourcepath_env))
-except:
-    pass
 # --
 # 3.3 posterior probability:
 def lnprob(p):
