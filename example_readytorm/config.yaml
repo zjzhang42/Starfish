@@ -36,7 +36,7 @@ Comments: >
 # The parameters shared between all orders
 Theta :
     grid : [760., 4.8]
-    vz : 5.0
+    vz : 0.0
     vsini : 5.0
     logOmega: -18.927
     Av: 0.0
