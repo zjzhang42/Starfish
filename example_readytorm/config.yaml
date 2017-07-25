@@ -38,7 +38,7 @@ Theta :
     grid : [760., 4.8]
     vz : 0.0
     vsini : 5.0
-    logOmega: -18.927
+    logOmega: -1.0
     Av: 0.0
 
 # Uncomment this line and set equal to the value of logg, if you'd like to fix it.
@@ -55,12 +55,12 @@ cheb_degree: 4
 cheb_jump : 1.0e-3
 
 Phi :
-    sigAmp : 10.0
+    sigAmp : 1.
     logAmp : -12.0
     l : 1.0
 
 Phi_jump :
-    sigAmp : 0.25
+    sigAmp : 0.025
     logAmp : 0.01
     l : 0.025
 
