@@ -399,8 +399,6 @@ theta_jump = Starfish.config["Theta_jump"]
 # - Cheb & Phi
 cheb_start = np.zeros((Starfish.config["cheb_degree"]-1,)) if fix_c0 else np.zeros((Starfish.config["cheb_degree"],))
 cheb_jump = np.ones_like(cheb_start) * Starfish.config["cheb_jump"]
-phi_start = Starfish.config["Phi"]
-phi_jump = Starfish.config["Phi_jump"]
 phi_start = [Starfish.config["Phi"]["sigAmp"], Starfish.config["Phi"]["logAmp"], Starfish.config["Phi"]["l"]]
 phi_jump = [Starfish.config["Phi_jump"]["sigAmp"], Starfish.config["Phi_jump"]["logAmp"], Starfish.config["Phi_jump"]["l"]]
 # --
