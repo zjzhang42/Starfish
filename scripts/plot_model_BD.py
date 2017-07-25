@@ -423,6 +423,7 @@ step_flatchain, ndim = flatchain.shape
 ## 4. Load observation data
 obs_wl = model.wl
 obs_fl = model.fl
+obs_sigma = model.sigma
 # --
 
 
@@ -488,7 +489,7 @@ if args.static:
     ax.legend(loc="lower right")
     plt.savefig('model_BD.png', dpi=300)
 
-    my_dict = {"wl": obs_wl.tolist(), "data":obs_fl.tolist(), "model": draw_phot.tolist()}
+    my_dict = {"wl": obs_wl.tolist(), "data":obs_fl.tolist(), "sigma":obs_sigma.tolist(), "model": draw_phot.tolist(), "resid":(obs_fl-draw_phot).tolist(), "spectrum_id":spectrum_id, "order":order_key}
     spec_json_file = Starfish.specfmt.format(spectrum_id, order_key) + "spec.json"
     with open(spec_json_file, 'w') as f:
         json.dump(my_dict, f, indent=2)
