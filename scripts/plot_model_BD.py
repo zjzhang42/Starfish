@@ -31,7 +31,7 @@ import os
 import Starfish.grid_tools
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
-from Starfish.emulator import F_bol_interp
+#from Starfish.emulator import F_bol_interp
 import Starfish.constants as C
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 
@@ -132,7 +132,7 @@ class Order:
 
         self.emulator = Emulator.open()
         self.emulator.determine_chunk_log(self.wl)
-        self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
+        # self.F_bol_interp = F_bol_interp(Starfish.grid_tools.HDF5Interface())
 
         self.pca = self.emulator.pca
 
@@ -294,7 +294,7 @@ class Order:
         gc.collect()
 
         # flux values
-        F_bol = self.F_bol_interp.interp(p.grid)
+        # F_bol = self.F_bol_interp.interp(p.grid)
 
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
@@ -414,10 +414,10 @@ def plot_func(p):
 
 
 ## 3. Load chain
-chain = np.load("emcee_chain.npy")
+emcee_chain = np.load("emcee_chain.npy")
 # focus on the latest steps in chain
 recent_step = 200
-recent_chain = ws[:, -1*recent_step:,:]
+recent_chain = emcee_chain[:, -1*recent_step:,:]
 nwalkers, nsamples, ndim = recent_chain.shape
 # flat chain
 flatchain = recent_chain.reshape(nwalkers*nsamples, ndim)
@@ -432,17 +432,18 @@ obs_fl = model.fl
 
 
 ## 5. radial velocity shift - delta lambda
-median_vz_shift = np.median(fc[:, 2])
+median_vz_shift = np.median(flatchain[:, 2])
 delta_obs_wl = median_vz_shift / 299792.0 * np.median(obs_wl)
 # --
 
 
 ## 6. Get the line list of strong lines in Arcturus
 import pandas as pd
-all_ll = pd.read_csv('$Starfish/ZJ_Func/data/Gully_ApJdataFrames/Rayner2009/tbl7_clean.csv')
+line_list = os.path.expandvars('$Starfish/ZJ_Func/data/Gully_ApJdataFrames/Rayner2009/tbl7_clean.csv')
+all_ll = pd.read_csv(line_list)
 all_ll['wl_A'] = all_ll.wl*10000.0
 
-ll = all_ll[ (all_ll.wl_A > np.min(wl)) & (all_ll.wl_A < np.max(wl)) ]
+ll = all_ll[ (all_ll.wl_A > np.min(obs_wl)) & (all_ll.wl_A < np.max(obs_wl)) ]
 ll = ll.reset_index()
 # --
 
@@ -463,7 +464,7 @@ if args.static:
     for i in range(n_draws):
         rint = rints[i]
         ps = flatchain[rint]
-        draw = lnprob_all(ps)
+        draw = plot_func(ps)
         draws.append(draw)
 
     pset = ps.copy()
@@ -473,10 +474,10 @@ if args.static:
     ax = plt.axes()
 
     for j in range(len(ll)):
-        ax.vlines(ll.wl_A[j]+dlam, 0, np.max(1.2*draws[0]), linestyle='dotted', colors='#AAAAAA')
+        ax.vlines(ll.wl_A[j]+delta_obs_wl, 0, np.max(1.2*draws[0]), linestyle='dotted', colors='#AAAAAA')
         d0 = draws[0]
         yval = np.max(1.1*draws[0])
-        ax.text(ll.wl_A[j]+dlam, yval, '{}'.format(ll.id[j]), rotation=90, fontsize=10)
+        ax.text(ll.wl_A[j]+delta_obs_wl, yval, '{}'.format(ll.id[j]), rotation=90, fontsize=10)
 
     ax.step(obs_wl, obs_fl, "b")
     ax.plot(obs_wl, draws[0], "r", alpha=0.5)
