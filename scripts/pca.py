@@ -7,6 +7,7 @@
 #
 # M. Gully (2015-2017)
 # ZJ Zhang (Jul. 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
+# ZJ Zhang (Jul. 23th, 2017)   [ADD --- save autocorrelation time in "autocorr_emcee.npy" and avearge accept fraction in "acceptfrac_emcee.npy"]
 #
 #################################################
 
@@ -238,6 +239,8 @@ if args.optimize == "emcee":
     # Save the last position of the walkers
     np.save("walkers_emcee.npy", pos)
     np.save("eparams_emcee.npy", sampler.flatchain)
+    np.save("acceptfrac_emcee.npy", np.mean(sampler.acceptance_fraction))
+    np.save("autocorr_emcee.npy", sampler.get_autocorr_time())
 
 
 if args.plot == "emcee":
