@@ -188,9 +188,8 @@ class Order:
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
         CC = self.Omega**2 * self.flux_scalar**2 * X.dot(self.C_GP.dot(X.T)) + self.data_mat
-<<<<<<< HEAD
         '''
-            what's wrong with self.C_GP?
+            what's wrong with CC?
             '''
         print("\n\nZJ's test begin")
         matrix = self.data_mat
@@ -203,10 +202,6 @@ class Order:
         n_tot = len(evals_CC)
         print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
         print("ZJ's test finished\n\n")
-
-=======
-        matrix = X.dot(self.C_GP.dot(X.T))
->>>>>>> 9ddeb6bd1a738d1e82088d6807c154933d038b71
 
         try:
             factor, flag = cho_factor(CC)
