@@ -25,7 +25,7 @@ import Starfish
 chain = np.load('emcee_chain.npy')
 # parameter space dimension
 nwalkers, n_samples, ndim = chain.shape
-# --
+# ----
 
 ## 2. Plot
 # 2.1 label settings
@@ -43,7 +43,8 @@ figure.tight_layout(h_pad=0.0)
 figure_path = Starfish.config["plotdir"] + "converge_test_star_BD.png"
 figure.savefig(figure_path)
 print("figure created - %s.\n"%(figure_path))
-
+# ----
+# END
 
 
 
