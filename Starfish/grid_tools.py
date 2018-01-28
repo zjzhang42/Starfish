@@ -176,14 +176,94 @@ class RawGridInterface:
         pass
 
 
+
 class MarleyGridInterface(RawGridInterface):
-    '''
-    An Interface to the 2017 Marley and collaborators synthetic library.
+    ''' An interface to the 2017 Marley and collaborators synthetic spectral library
+        - added by Michael Gully and modified by ZJ Zhang
+        '''
+    def __init__(self, air=False, norm=False, wl_range=[4000, 50000], base=os.path.expandvars(Starfish.grid["raw_path"])):
+        ## basic information of model grids
+        super().__init__(name="Marley",
+                         param_names=["temp", "logg"],
+                         points=[np.array([200, 225, 250, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400]),
+                                 np.arange(3.25, 5.51, 0.25)]
+                         air=air,
+                         wl_range=wl_range,
+                         base=base)
+        # norm to decide if normalized to 1 solar luminosity (boolean)
+        self.norm = norm  # deprecated by Gully
+        # dictionary of translating the model parameter (first for Teff and second for log-g)
+        self.par_dicts = [None,
+                          {3.25:"17", 3.5:"31", 3.75:"56", 4.0:"100",4.25:"178",4.5:"316",4.75:"562", 5.0:"1000",5.25:"1780",5.5:"3160"}]
 
-    :param norm: normalize the spectrum to solar luminosity?
-    :type norm: bool
+        ## load an arbitrary model file to obtain the wavelength grid
+        try:
+            base = os.path.expandvars(self.base)
+            wl_file = pd.read_csv(self.base + '/sp_t1000g1000nc_m0.0', names=['wavelength', 'flux'], skiprows=3, delim_whitespace=True)
+        except OSError:
+            raise C.GridError("Wavelength file improperly specified.")
+        # obtain wavelength
+        wl_full_micron = wl_file.wavelength[::-1].values * u.micron
+        wl_full_Angstrom = wl_full_micron.to(u.Angstrom)
+        # if air is true, convert the normally vacuum file to air wls.
+        if self.air:
+            self.wl_full = vacuum_to_air(wl_full_Angstrom.value)
+        else:
+            self.wl_full = wl_full_Angstrom.value
 
-    '''
+        ## select wavelength range of interest
+        self.ind = (self.wl_full >= self.wl_range[0]) & (self.wl_full <= self.wl_range[1])
+        self.wl = self.wl_full[self.ind]
+        self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m0.0"
+
+    def load_flux(self, parameters, norm=True):
+        '''
+            Load just the flux and header information.
+
+            :param parameters: stellar parameters
+            :type parameters: np.array
+
+            :raises C.GridError: if the file cannot be found on disk.
+
+            :returns: tuple (flux_array, header_dict)
+            
+            '''
+        ## identify the model spectrum based on the chosen parameters
+        # check if parameters are well-defined by the user
+        self.check_params(parameters)
+        # retrieve parameter strings
+        str_parameters = []
+        for param, par_dict in zip(parameters, self.par_dicts):
+            if par_dict is None:
+                str_parameters.append(param)
+            else:
+                str_parameters.append(par_dict[param])
+        # model file name
+        fname = self.rname.format(*str_parameters)
+
+        ## load model spectrum
+        try:
+            model_file = pd.read_csv(fname, names=['wavelength', 'flux'], skiprows=3, delim_whitespace=True)
+            flux_nu = model_file.flux[::-1].values
+        except OSError:
+            raise C.GridError("{} is not on disk.".format(fname))
+
+        ## obtain wavelength
+        wl_full_Angstrom = (model_file.wavelength[::-1].values * u.micron).to(u.Angstrom)
+        flux_lambda = (flux_nu * u.erg/u.s/u.cm**2/u.Hz).to(u.erg/u.s/u.cm**2/u.Angstrom, equivalencies=u.spectral_density(wl_full_Angstrom))
+        f = flux_lambda.value / np.pi # convert to erg/cm^2/s/A/steradian
+
+        #Add temp, logg, norm to the metadata
+        header = {}
+        header["norm"] = self.norm
+        header["air"] = self.air
+                                                        
+        return (f[self.ind], header)
+# ----
+
+
+'''
+class MarleyGridInterface(RawGridInterface):
     def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
         base=os.path.expandvars(Starfish.grid["raw_path"])):
 
@@ -219,17 +299,6 @@ class MarleyGridInterface(RawGridInterface):
         self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m0.0"
 
     def load_flux(self, parameters, norm=True):
-        '''
-       Load just the flux and header information.
-
-       :param parameters: stellar parameters
-       :type parameters: np.array
-
-       :raises C.GridError: if the file cannot be found on disk.
-
-       :returns: tuple (flux_array, header_dict)
-
-       '''
         self.check_params(parameters) # Check to make sure that the keys are
         # allowed and that the values are in the grid
 
@@ -268,25 +337,7 @@ class MarleyGridInterface(RawGridInterface):
 
         return (f[self.ind], header)
 
-class MarleyDec2010GridInterface(MarleyGridInterface):
-    '''
-    An Interface to the 2017 Marley and collaborators synthetic library.
-
-    :param norm: normalize the spectrum to solar luminosity?
-    :type norm: bool
-
-    '''
-    pass
-
-
 class MarleyMay2017GridInterface(MarleyGridInterface):
-    '''
-    An Interface to the 2017 Marley and collaborators synthetic library.
-
-    :param norm: normalize the spectrum to solar luminosity?
-    :type norm: bool
-
-    '''
     def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
         base=os.path.expandvars(Starfish.grid["raw_path"])):
 
@@ -305,7 +356,7 @@ class MarleyMay2017GridInterface(MarleyGridInterface):
                           {3.25:"17", 3.5:"31", 3.75:"56",
                            4.0:"100",4.25:"178",4.5:"316",4.75:"562",
                            5.0:"1000",5.25:"1780",5.5:"3160"}]
-        
+'''
 
 class PHOENIXGridInterface(RawGridInterface):
     '''
