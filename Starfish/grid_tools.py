@@ -4,6 +4,7 @@
 #
 # M. Gully (2015-2017)
 # ZJ Zhang (Jul. 20th, 2017)   [REVISE --- "class SPEX_PRZ(Instrument)"]
+# ZJ Zhang (Jan. 27th, 2018)   [REVISE --- combine "MarleyInterface" and "MarleyMay2017Interface" to the single one]
 #
 #################################################
 
@@ -753,13 +754,12 @@ class HDF5Creator:
 
             else:
                 # apply just instrumental taper
-
                 if self.Instrument.name == 'SPEX_PRZ':
                     #Need a wavelength dependent taper.
                     fl_final = self.wl_final*0.0
                     for j in range(len(self.wl_final)//8):
                         R_est = np.mean(self.Instrument.res_gradient()(self.wl_final[8*j:8*j+8]))
-                        sigma = 299792.46/R_est / 2.35 # in km/s
+                        sigma = 299792.46 / R_est / 2.35 # in km/s
                         # Instrumentally broaden the spectrum by multiplying with a Gaussian in Fourier space
                         taper = np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (self.ss ** 2))
                         FF_tap = FF * taper
