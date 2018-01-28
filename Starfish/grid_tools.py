@@ -248,10 +248,14 @@ class MarleyGridInterface(RawGridInterface):
         except OSError:
             raise C.GridError("{} is not on disk.".format(fname))
 
-        ## obtain wavelength
+        ## obtain wavelength and flux
         wl_full_Angstrom = (model_file.wavelength[::-1].values * u.micron).to(u.Angstrom)
         flux_lambda = (flux_nu * u.erg/u.s/u.cm**2/u.Hz).to(u.erg/u.s/u.cm**2/u.Angstrom, equivalencies=u.spectral_density(wl_full_Angstrom))
-        f = flux_lambda.value / np.pi # convert to erg/cm^2/s/A/steradian
+        # check if the normalized spectra are needed, i.e., convert erg/s/cm2/A => erg/s/cm2/A/steradian
+        if self.norm:
+            f = flux_lambda.value / np.pi # convert to erg/cm^2/s/A/steradian
+        else:
+            f = flux_lambda.value
 
         #Add temp, logg, norm to the metadata
         header = {}
@@ -262,101 +266,6 @@ class MarleyGridInterface(RawGridInterface):
 # ----
 
 
-'''
-class MarleyGridInterface(RawGridInterface):
-    def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
-        base=os.path.expandvars(Starfish.grid["raw_path"])):
-
-        super().__init__(name="Marley", param_names = ["temp", "logg"], 
-            points = [np.array([500, 525, 550, 575, 600, 650, 700, 750, 800, 
-            850, 900, 950,  1000]), np.arange(4.0, 5.51, 0.25)],
-            air=air, wl_range=wl_range, base=base)
-
-        self.norm = norm #Deprecated
-        self.par_dicts = [None,
-                          {4.0:"100",4.25:"178",4.5:"316",4.75:"562",
-                           5.0:"1000",5.25:"1780",5.5:"3160"}]
-
-        self.base = os.path.expandvars(self.base)
-        # if air is true, convert the normally vacuum file to air wls.
-        try:
-            dat = pd.read_csv(self.base + '/sp_t1000g1000nc_m0.0', 
-                      names=['wavelength', 'flux'], skiprows=3, 
-                      delim_whitespace=True)
-        except OSError:
-            raise C.GridError("Wavelength file improperly specified.")
-
-        # Wavelength in Angstroms, increasing
-        w_full = 10000.0*dat.wavelength[::-1].values 
-        
-        if self.air:
-            self.wl_full = vacuum_to_air(w_full)
-        else:
-            self.wl_full = w_full
-
-        self.ind = (self.wl_full >= self.wl_range[0]) & (self.wl_full <= self.wl_range[1])
-        self.wl = self.wl_full[self.ind]
-        self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m0.0"
-
-    def load_flux(self, parameters, norm=True):
-        self.check_params(parameters) # Check to make sure that the keys are
-        # allowed and that the values are in the grid
-
-        # Create a list of the parameters to be fed to the format string
-        # optionally replacing arguments using the dictionaries, if the formatting
-        # of a certain parameter is tricky
-        str_parameters = []
-        for param, par_dict in zip(parameters, self.par_dicts):
-            if par_dict is None:
-                str_parameters.append(param)
-            else:
-                str_parameters.append(par_dict[param])
-
-        fname = self.rname.format(*str_parameters)
-
-        #Still need to check that file is in the grid, otherwise raise a C.GridError
-        #Read all metadata in from the FITS header, and append to spectrum
-        try:
-            dat = pd.read_csv(fname, names=['wavelength', 'flux'], 
-                    skiprows=3, delim_whitespace=True)
-            f = dat.flux[::-1].values
-        except OSError:
-            raise C.GridError("{} is not on disk.".format(fname))
-        
-        x = dat.wavelength[::-1].values*u.micron
-        f = (f*u.erg/u.cm**2/u.s/u.Hz).to(
-             u.erg/u.cm**2/u.s/u.Angstrom, 
-             equivalencies=u.spectral_density(x))
-        f = f.value
-        f = f/np.pi # convert to erg/cm^2/s/A/steradian
-
-        #Add temp, logg, Z, alpha, norm to the metadata
-        header = {}
-        header["norm"] = self.norm
-        header["air"] = self.air
-
-        return (f[self.ind], header)
-
-class MarleyMay2017GridInterface(MarleyGridInterface):
-    def __init__(self, air=False, norm=False, wl_range=[4000, 50000],
-        base=os.path.expandvars(Starfish.grid["raw_path"])):
-
-        #There's probably a more elegant inheritance way to do this...
-        super().__init__(air=air, norm=norm, wl_range=wl_range,
-        base=base)
-
-        self.name="MarleyMay2017"
-        self.param_names = ["temp", "logg"]
-        self.points = [np.array([200, 225, 250, 300, 325, 350, 375, 400, 
-        425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 
-        850, 900, 950,  1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700,
-        1800, 1900, 2000, 2100, 2200, 2400]), np.arange(3.25, 5.51, 0.25)]
-
-        self.par_dicts = [None,
-                          {3.25:"17", 3.5:"31", 3.75:"56",
-                           4.0:"100",4.25:"178",4.5:"316",4.75:"562",
-                           5.0:"1000",5.25:"1780",5.5:"3160"}]
-'''
 
 class PHOENIXGridInterface(RawGridInterface):
     '''
