@@ -752,6 +752,12 @@ class HDF5Creator:
                 # institute vsini and instrumental taper
                 FF_tap = FF * sb * self.taper
 
+                # do IFFT
+                fl_tapered = np.fft.irfft(FF_tap)
+
+                # downsample to the final grid
+                interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
+                fl_final = interp(self.wl_final)
             else:
                 # apply just instrumental taper
                 if self.Instrument.name == 'SPEX_PRZ':
@@ -759,11 +765,13 @@ class HDF5Creator:
                     fl_final = self.wl_final*0.0
                     for j in range(len(self.wl_final)//8):
                         R_est = np.mean(self.Instrument.res_gradient()(self.wl_final[8*j:8*j+8]))
-                        sigma = 299792.46 / R_est / 2.35 # in km/s
+                        sigma = C.c_kms / R_est / 2.35 # in km/s
                         # Instrumentally broaden the spectrum by multiplying with a Gaussian in Fourier space
                         taper = np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (self.ss ** 2))
                         FF_tap = FF * taper
+                        # do IFFT
                         fl_tapered = np.fft.irfft(FF_tap)
+                        # downsample to the final grid
                         interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
                         fl_final[8*j:8*j+8] = interp(self.wl_final[8*j:8*j+8])
                 else:
@@ -1166,7 +1174,7 @@ class SPEX_PRZ(Instrument):
         '''Returns a R(lambda) function for SpeX Prism_mode'''
         # assumes an 0.5'' as slit
         # Beware-- The most common is actually an 0.8'' slit.
-        filename = os.path.expandvars('$Starfish/ZJ_Func/data/res_gradient/IRTF_SpeX_PRZ_03/SpeX_PRZ_03.csv')
+        filename = os.path.expandvars('$Starfish/ZJ_Func/data/res_gradient/IRTF_SpeX_PRZ_03.csv')
         res_dat = pd.read_csv(filename)
         R_lambda = res_dat.resolution_R.values * (0.3/0.5)  # load resolution values and scale them to a 0.5" slit
         lambda_A = res_dat.wavelength_um.values*10000.0
