@@ -1174,7 +1174,7 @@ class SPEX_PRZ(Instrument):
         '''Returns a R(lambda) function for SpeX Prism_mode'''
         # assumes an 0.5'' as slit
         # Beware-- The most common is actually an 0.8'' slit.
-        filename = os.path.expandvars('$Starfish/ZJ_Func/data/res_gradient/IRTF_SpeX_PRZ_03.csv')
+        filename = os.path.expandvars('$Starfish/data/res_gradient/IRTF_SpeX_PRZ_03.csv')
         res_dat = pd.read_csv(filename)
         R_lambda = res_dat.res.values * (0.3/0.5)  # load resolution values and scale them to a 0.5" slit
         lambda_A = (res_dat.wavelength_um.values * u.um).to(u.Angstrom).value
