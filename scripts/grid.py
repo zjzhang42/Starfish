@@ -66,7 +66,7 @@ if args.plot:
         fig, ax = plt.subplots(nrows=1, figsize=(8, 6))
         ax.plot(interface.wl, flux)
         ax.set_xlabel(r"$\lambda$ [AA]")
-        ax.set_ylabel(r"$f_\lambda$")
+        ax.set_ylabel(r"$f_\lambda$ [erg/s/cm$^{2}$/AA/Ster]")
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
         fig.savefig(grid_plotdir + "g" + name + ".png")

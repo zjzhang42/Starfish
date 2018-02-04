@@ -41,6 +41,14 @@ from Starfish.covariance import Sigma
 import os
 
 
+# create output path for plots - ZJ Zhang
+pca_plotdir = os.path.expandvars(Starfish.config["plotdir"]) + "pca/"
+try:
+    os.stat(pca_plotdir)
+except:
+    os.mkdir(pca_plotdir)
+# --
+
 if args.create:
     myHDF5 = HDF5Interface()
     my_pca = PCAGrid.create(myHDF5)
@@ -74,26 +82,18 @@ if args.plot == "reconstruct":
 
         ax[1].plot(my_pca.wl, real - recon)
         ax[1].set_xlabel(r"$\lambda$ [AA]")
-        ax[1].set_ylabel(r"$f_\lambda$")
+        ax[1].set_ylabel(r"residual $f_\lambda$")
 
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
         ax[0].set_title(name)
-        fig.savefig(Starfish.config["plotdir"] + "PCA_" + name + ".png")
+        fig.savefig(pca_plotdir + "PCA_" + name + ".png")
         plt.close("all")
 
     p = mp.Pool(mp.cpu_count())
     p.map(plot, data)
 
 if args.plot == "eigenspectra":
-    # create output path - ZJ Zhang
-    pca_plotdir = os.path.expandvars(Starfish.config["plotdir"]) + "pca/"
-    try:
-        os.stat(pca_plotdir)
-    except:
-        os.mkdir(pca_plotdir)
-    # --
-
     my_HDF5 = HDF5Interface()
     my_pca = PCAGrid.open()
 
@@ -132,7 +132,7 @@ if args.plot == "priors":
         plt.plot(x, prob)
         plt.xlabel(par)
         plt.ylabel("Probability")
-        plt.savefig(Starfish.config["plotdir"] + "prior_" + par + ".png")
+        plt.savefig(pca_plotdir + "prior_" + par + ".png")
         plt.close("all")
 
 # If we're doing optimization, period, set up some variables and the lnprob
