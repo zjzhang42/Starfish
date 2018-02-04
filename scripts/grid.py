@@ -38,9 +38,14 @@ if args.create:
     creator.process_grid()
 
 if args.plot:
+    # create output path - ZJ Zhang
+    grid_plotdir = os.path.expandvars(Starfish.config["plotdir"]) + "processed_grids/"
+    try:
+        os.stat(grid_plotdir)
+    except:
+        os.mkdir(grid_plotdir)
 
     # Check to make sure the file exists
-
     import os
     hdf5_path = os.path.expandvars(Starfish.grid["hdf5_path"])
     if not os.path.exists(hdf5_path):
@@ -64,7 +69,7 @@ if args.plot:
         ax.set_ylabel(r"$f_\lambda$")
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
-        fig.savefig(os.path.expandvars(Starfish.config["plotdir"]) + "g" + name + ".png")
+        fig.savefig(grid_plotdir + "g" + name + ".png")
 
         plt.close("all")
 

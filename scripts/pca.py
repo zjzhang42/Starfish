@@ -86,6 +86,14 @@ if args.plot == "reconstruct":
     p.map(plot, data)
 
 if args.plot == "eigenspectra":
+    # create output path - ZJ Zhang
+    pca_plotdir = os.path.expandvars(Starfish.config["plotdir"]) + "pca/"
+    try:
+        os.stat(pca_plotdir)
+    except:
+        os.mkdir(pca_plotdir)
+    # --
+
     my_HDF5 = HDF5Interface()
     my_pca = PCAGrid.open()
 
@@ -110,7 +118,7 @@ if args.plot == "eigenspectra":
         ax.set_ylabel("count")
 
     fig.subplots_adjust(wspace=0.3, left=0.1, right=0.98, bottom=0.1, top=0.98)
-    fig.savefig(Starfish.config["plotdir"] + "eigenspectra.png")
+    fig.savefig(pca_plotdir + "eigenspectra.png")
 
 
 if args.plot == "priors":
