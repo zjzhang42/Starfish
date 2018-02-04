@@ -64,7 +64,7 @@ if args.plot:
         ax.set_ylabel(r"$f_\lambda$")
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
-        fig.savefig(Starfish.config["plotdir"] + "g" + name + ".png")
+        fig.savefig(os.path.expandvars(Starfish.config["plotdir"]) + "g" + name + ".png")
 
         plt.close("all")
 
