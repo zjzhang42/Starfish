@@ -86,7 +86,7 @@ if args.plot == "reconstruct":
 
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
-        ax[0].set_title(name)
+        ax[0].set_title(name+"_averes_%.3f_stdres_%.3f"%(np.mean(real - recon), np.std(real - recon)))
         fig.savefig(pca_plotdir + "PCA_" + name + ".png")
         plt.close("all")
 
