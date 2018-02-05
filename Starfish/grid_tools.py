@@ -763,8 +763,9 @@ class HDF5Creator:
                 if self.Instrument.name == 'SPEX_PRZ':
                     #Need a wavelength dependent taper.
                     fl_final = self.wl_final*0.0
-                    for j in range(len(self.wl_final)//8):
-                        R_est = np.mean(self.Instrument.res_gradient()(self.wl_final[8*j:8*j+8]))
+                    res_wl_step = 8
+                    for j in range(len(self.wl_final)//res_wl_step):
+                        R_est = np.mean(self.Instrument.res_gradient()(self.wl_final[res_wl_step*j:res_wl_step*(j+1)]))
                         sigma = C.c_kms / R_est / 2.35 # in km/s
                         # Instrumentally broaden the spectrum by multiplying with a Gaussian in Fourier space
                         taper = np.exp(-2 * (np.pi ** 2) * (sigma ** 2) * (self.ss ** 2))
@@ -773,7 +774,7 @@ class HDF5Creator:
                         fl_tapered = np.fft.irfft(FF_tap)
                         # downsample to the final grid
                         interp = InterpolatedUnivariateSpline(self.wl_FFT, fl_tapered, k=5)
-                        fl_final[8*j:8*j+8] = interp(self.wl_final[8*j:8*j+8])
+                        fl_final[res_wl_step*j:res_wl_step*(j+1)] = interp(self.wl_final[res_wl_step*j:res_wl_step*(j+1)])
                 else:
                     FF_tap = FF * self.taper
 

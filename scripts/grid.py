@@ -69,6 +69,7 @@ if args.plot:
         ax.set_ylabel(r"$f_\lambda$ [erg/s/cm$^{2}$/AA/Ster]")
         fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
         name = fmt.format(*[p for p in par])
+        ax.set_title(name+"_Rpseudo=%d"%(len(interface.wl)))
         fig.savefig(grid_plotdir + "g" + name + ".png")
 
         plt.close("all")
