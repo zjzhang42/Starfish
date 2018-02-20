@@ -41,12 +41,28 @@ from Starfish.covariance import Sigma
 import os
 
 
-# create output path for plots - ZJ Zhang
-pca_plotdir = os.path.expandvars(Starfish.config["plotdir"]) + "pca/"
+### output path setups - ZJ Zhang
+## plots
+plotdir = os.path.expandvars(Starfish.config["plotdir"])
+# pca
+pca_plotdir = plotdir + "pca/"
 try:
     os.stat(pca_plotdir)
 except:
     os.mkdir(pca_plotdir)
+# emulator
+emulator_plotdir = plotdir + "emulator/"
+try:
+    os.stat(emulator_plotdir)
+except:
+    os.mkdir(emulator_plotdir)
+
+## output files
+emulator_outdir = os.path.expandvars(Starfish.config["outdir"]) + "emulator/"
+try:
+    os.stat(emulator_outdir)
+except:
+    os.mkdir(emulator_outdir)
 # --
 
 if args.create:
@@ -194,7 +210,7 @@ if args.optimize:
 if args.optimize == "fmin":
 
     if args.resume:
-        p0 = np.load("eparams_fmin.npy")
+        p0 = np.load(emulator_outdir+"eparams_fmin.npy")
 
     else:
         amp = 100.
@@ -207,7 +223,7 @@ if args.optimize == "fmin":
     func = lambda p : lnprob(p, fmin=True)
     result = fmin(func, p0, maxiter=10000, maxfun=10000)
     print(result)
-    np.save("eparams_fmin.npy", result)
+    np.save(emulator_outdir+"eparams_fmin.npy", result)
 
 if args.optimize == "emcee":
 
@@ -218,7 +234,7 @@ if args.optimize == "emcee":
 
     # Assemble p0 based off either a guess or the previous state of walkers
     if args.resume:
-        p0 = np.load("walkers_emcee.npy")
+        p0 = np.load(emulator_outdir+"walkers_emcee.npy")
     else:
         p0 = []
         # p0 is a (nwalkers, ndim) array
@@ -236,25 +252,25 @@ if args.optimize == "emcee":
 
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=mp.cpu_count())
 
-    # burn in
+    '''# burn in
     pos, prob, state = sampler.run_mcmc(p0, args.samples)
     sampler.reset()
     print("Burned in")
 
     # actual run
-    pos, prob, state = sampler.run_mcmc(pos, args.samples)
+    pos, prob, state = sampler.run_mcmc(pos, args.samples)'''
+    # later on - manually choose burn-in phase
+    pos, prob, state = sampler.run_mcmc(p0, args.samples)
 
     # Save the last position of the walkers
-    np.save("walkers_emcee.npy", pos)
-    np.save("eparams_emcee.npy", sampler.flatchain)
-    np.save("acceptfrac_emcee.npy", np.mean(sampler.acceptance_fraction))
-    np.save("autocorr_emcee.npy", sampler.get_autocorr_time())
+    np.save(emulator_outdir+"walkers_emcee.npy", pos)
+    np.save(emulator_outdir+"eparams_emcee.npy", sampler.flatchain)
 
 
 if args.plot == "emcee":
     #Make a triangle plot of the samples
     my_pca = emulator.PCAGrid.open()
-    flatchain = np.load("eparams_emcee.npy")
+    flatchain = np.load(emulator_outdir+"eparams_emcee.npy")
     try:
         import corner as triangle
     except:
@@ -269,7 +285,7 @@ if args.plot == "emcee":
     plt.title(r"$\lambda_\xi$")
     plt.xlabel(r"$\lambda_\xi$")
     plt.ylabel("prob")
-    plt.savefig(Starfish.config["plotdir"] + "triangle_lambda_xi.png")
+    plt.savefig(emulator_plotdir + "triangle_lambda_xi.png")
 
     # Make a triangle plot for each eigenspectrum independently
     for i in range(my_pca.m):
@@ -277,16 +293,16 @@ if args.plot == "emcee":
         end = 1 + (i + 1) * npar
         figure = triangle.corner(flatchain[:, start:end], quantiles=[0.16, 0.5, 0.84],
             plot_contours=True, plot_datapoints=False, show_titles=True, labels=labels)
-        figure.savefig(Starfish.config["plotdir"] + "triangle_{}.png".format(i))
+        figure.savefig(emulator_plotdir + "triangle_{}.png".format(i))
 
 if args.plot == "emulator":
 
     my_pca = PCAGrid.open()
 
     if args.params == "fmin":
-        eparams = np.load("eparams_fmin.npy")
+        eparams = np.load(emulator_outdir+"eparams_fmin.npy")
     elif args.params == "emcee":
-        eparams = np.median(np.load("eparams_emcee.npy"), axis=0)
+        eparams = np.median(np.load(emulator_outdir+"eparams_emcee.npy"), axis=0)
         print("Using emcee median")
     else:
         import sys
@@ -389,7 +405,7 @@ if args.plot == "emulator":
 
             fstring = "w{:}".format(eig_i) + Starfish.parname[active_dim] + "".join(["{:.1f}".format(ub) for ub in ublock[0, :]])
 
-            fig.savefig(Starfish.config["plotdir"] + fstring + ".png")
+            fig.savefig(emulator_plotdir + fstring + ".png")
 
             plt.close('all')
 
@@ -400,9 +416,9 @@ if args.plot == "emulator":
 
 if args.store:
     if args.params == "fmin":
-        eparams = np.load("eparams_fmin.npy")
+        eparams = np.load(emulator_outdir+"eparams_fmin.npy")
     elif args.params == "emcee":
-        eparams = np.median(np.load("eparams_emcee.npy"), axis=0)
+        eparams = np.median(np.load(emulator_outdir+"eparams_emcee.npy"), axis=0)
         print("Using emcee median")
     else:
         import sys
