@@ -7,7 +7,7 @@
 #
 # M. Gully (2015-2017)
 # ZJ Zhang (Jul. 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
-# ZJ Zhang (Jul. 23th, 2017)   [ADD --- save autocorrelation time in "autocorr_emcee.npy" and avearge accept fraction in "acceptfrac_emcee.npy"]
+# ZJ Zhang (Feb. 23th, 2018)   [REVISE --- replace the burn-in phase by adding a user-defined burn-in fraction "f_burnin"; the "resume" keyword will concatenate the output chains automatically]
 #
 #################################################
 
@@ -18,6 +18,8 @@ parser.add_argument("--create", action="store_true", help="Create a PCA decompos
 
 parser.add_argument("--plot", choices=["reconstruct", "eigenspectra", "priors", "emcee",
                                        "emulator"], help="reconstruct: plot the original synthetic spectra vs. the PCA reconstructed spectra.\n priors: plot the chosen priors on the parameters emcee: plot the triangle diagram for the result of the emcee optimization. emulator: plot weight interpolations")
+
+parser.add_argument("--f_burnin", type=float, default=None, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
 
 parser.add_argument("--optimize", choices=["fmin", "emcee"], help="Optimize the emulator using either a downhill simplex algorithm or the emcee ensemble sampler algorithm.")
 
@@ -63,7 +65,9 @@ try:
     os.stat(emulator_outdir)
 except:
     os.mkdir(emulator_outdir)
-# --
+###################################
+
+
 
 if args.create:
     myHDF5 = HDF5Interface()
@@ -249,28 +253,34 @@ if args.optimize == "emcee":
 
         p0 = np.array(p0).T
 
-
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=mp.cpu_count())
 
-    '''# burn in
-    pos, prob, state = sampler.run_mcmc(p0, args.samples)
-    sampler.reset()
-    print("Burned in")
-
-    # actual run
-    pos, prob, state = sampler.run_mcmc(pos, args.samples)'''
-    # later on - manually choose burn-in phase
+    # actual run without burn-in at this stage
     pos, prob, state = sampler.run_mcmc(p0, args.samples)
 
     # Save the last position of the walkers
     np.save(emulator_outdir+"walkers_emcee.npy", pos)
-    np.save(emulator_outdir+"eparams_emcee.npy", sampler.flatchain)
+    if args.resume:
+        prev_chain = np.load(emulator_outdir+"eparams_emcee.npy")
+        new_chain = np.hstack((prev_chain, sampler.chain))
+        np.save(emulator_outdir+"eparams_emcee.npy", new_chain)
+    else:
+        np.save(emulator_outdir+"eparams_emcee.npy", sampler.chain)
 
 
 if args.plot == "emcee":
-    #Make a triangle plot of the samples
+    # Make a triangle plot of the samples
     my_pca = emulator.PCAGrid.open()
-    flatchain = np.load(emulator_outdir+"eparams_emcee.npy")
+    chain = np.load(emulator_outdir+"eparams_emcee.npy")
+    # remove the burn-in phase
+    nwalkers, nsamples, ndim = chain.shape
+    if (args.f_burnin is not None) and (0 <= args.f_burnin < 1):
+        burned_chain = chain[:, int(nsamples * args.f_burnin):, :]
+    else:
+        print("warning: f_burnin should be in [0, 1) - using the entire chain...")
+        burned_chain = chain
+    flatchain = burned_chain.reshape((-1, ndim))
+
     try:
         import corner as triangle
     except:
@@ -302,7 +312,18 @@ if args.plot == "emulator":
     if args.params == "fmin":
         eparams = np.load(emulator_outdir+"eparams_fmin.npy")
     elif args.params == "emcee":
-        eparams = np.median(np.load(emulator_outdir+"eparams_emcee.npy"), axis=0)
+        # load chains
+        chain = np.load(emulator_outdir+"eparams_emcee.npy")
+        # remove the burn-in phase
+        nwalkers, nsamples, ndim = chain.shape
+        if (args.f_burnin is not None) and (0 <= args.f_burnin < 1):
+            burned_chain = chain[:, int(nsamples * args.f_burnin):, :]
+        else:
+            print("warning: f_burnin should be in [0, 1) - using the entire chain...")
+            burned_chain = chain
+        flatchain = burned_chain.reshape((-1, ndim))
+        # final parameters
+        eparams = np.median(flatchain, axis=0)
         print("Using emcee median")
     else:
         import sys
@@ -418,7 +439,18 @@ if args.store:
     if args.params == "fmin":
         eparams = np.load(emulator_outdir+"eparams_fmin.npy")
     elif args.params == "emcee":
-        eparams = np.median(np.load(emulator_outdir+"eparams_emcee.npy"), axis=0)
+        # load chains
+        chain = np.load(emulator_outdir+"eparams_emcee.npy")
+        # remove the burn-in phase
+        nwalkers, nsamples, ndim = chain.shape
+        if (args.f_burnin is not None) and (0 <= args.f_burnin < 1):
+            burned_chain = chain[:, int(nsamples * args.f_burnin):, :]
+        else:
+            print("warning: f_burnin should be in [0, 1) - using the entire chain...")
+            burned_chain = chain
+        flatchain = burned_chain.reshape((-1, ndim))
+        # final parameters
+        eparams = np.median(flatchain, axis=0)
         print("Using emcee median")
     else:
         import sys
