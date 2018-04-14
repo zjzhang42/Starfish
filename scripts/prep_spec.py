@@ -171,8 +171,11 @@ def HDF5_converter(outfile, wls, fls, sigmas, u_wls='micron', u_fls='erg/s/cm2/A
         print("warning: the '%s' unit is not incorporated for fls... simply assuming wls has unit of 'erg/s/cm2/A'."%(u_fls))
         Sf_fls = fls
         Sf_sigmas = sigmas
-    ### create mask array
-    Sf_mask = int(1.0) * (sigmas > 0.0) # mask pixels with non-positive or Nan sigmas
+    # adjust bad flux uncertainties - use the absolute flux value as sigma's if the given sigma is None or <=0
+    id_bad_sigmas = np.where(np.isnan(Sf_sigmas) | (Sf_sigmas <= 0))
+    Sf_sigmas[id_bad_sigmas] = np.abs(Sf_fls[id_bad_sigmas])
+    ### nominal mask array - all one's (no mask)
+    Sf_mask = np.ones(len(Sf_wls), dtype=int)
     ### save to HDF5
     hdf5_load = h5py.File(outfile, 'w')
     hdf5_load.create_dataset('wls', data=Sf_wls)

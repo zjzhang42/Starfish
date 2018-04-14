@@ -12,6 +12,7 @@ args = parser.parse_args()
 import Starfish
 import json
 import numpy as np
+import os
 
 from Starfish.covariance import get_dense_C, make_k_func, make_k_func_region
 from Starfish.model import ThetaParam, PhiParam
@@ -100,7 +101,7 @@ if args.matplotlib:
 
 
     # fig.subplots_adjust()
-    fig.savefig(Starfish.config["plotdir"] + args.file + ".png")
+    fig.savefig(os.path.expandvars(Starfish.config["plotdir"]) + args.file + ".png")
 
 if args.save_draw:
     draw_4 = draws[4, :]
