@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 #
 #
-## Author: I. Czekala
+## Author: I. Czekala and Michael Gully
 #
 # Modification History:
 #
-# M. Gully (2015-2017)
-# ZJ Zhang (Jul. 23th, 2017)
+# ZJ Zhang (Apr. 13th, 2018)
 #
 #################################################
 
 # ----
 # Goal:
-# fit models to observations and obtain physical/nuisance/covariance-hyper parameters
+# plot model fitting results to observations (Gully's hack)
 # ----
 
 
@@ -20,13 +19,12 @@ import multiprocessing
 import time
 import numpy as np
 import Starfish
-from Starfish.model_BD import ThetaParam, PhiParam
+from Starfish.model import ThetaParam, PhiParam
 
 import argparse
-parser = argparse.ArgumentParser(prog="star_BD.py", description="Run Starfish fitting model in single order mode with many walkers.")
-parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
-parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
-parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
+parser = argparse.ArgumentParser(prog="plot_many_mix_models_marley.py", description="Plot many mixture models.")
+parser.add_argument("--config", action='store_true', help="Use config file instead of emcee.")
+parser.add_argument("--f_burnin", type=float, default=None, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
 args = parser.parse_args()
 
 import os
@@ -52,7 +50,19 @@ from operator import itemgetter
 import yaml
 import shutil
 import json
+import pandas as pd
 
+
+### output path setups - ZJ Zhang
+## plots
+plotdir = os.path.expandvars(Starfish.config["plotdir"])
+# star_inference
+sfinfer_plotdir = plotdir + "star_inference/"
+## debug files
+debug_outdir = os.path.expandvars(Starfish.config["outdir"]) + "star_debug/"
+## output files
+star_outdir = os.path.expandvars(Starfish.config["outdir"]) + "star_inference/"
+###################################
 
 
 Starfish.routdir = ""
@@ -66,7 +76,7 @@ spectra_keys = np.arange(len(DataSpectra))
 #Instruments are provided as one per dataset
 Instruments = [eval("Starfish.grid_tools." + inst)() for inst in Starfish.data["instruments"]]
 
-# log file
+
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s", filename="{}log.log".format(
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
 
@@ -161,22 +171,6 @@ class Order:
         # Update the outdir based upon id
         self.noutdir = Starfish.routdir + "{}/{}/".format(self.spectrum_id, self.order)
 
-    #################################################################################
-    def lnprob_Theta(self, p):
-        '''
-        Update the model to the Theta parameters and then evaluate the lnprob.
-
-        Intended to be called from the master process via the command "LNPROB".
-        '''
-        try:
-            self.update_Theta(p)
-            lnp = self.evaluate() # Also sets self.lnprob to new value
-            return lnp
-        except C.ModelError:
-            self.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
-            return -np.inf
-    #################################################################################
-
     def evaluate(self):
         '''
         Return the lnprob using the current version of the C_GP matrix, data matrix,
@@ -187,31 +181,29 @@ class Order:
 
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
-        CC = self.Omega**2 * self.flux_scalar**2 * X.dot(self.C_GP.dot(X.T)) + self.data_mat
-        '''
-            what's wrong with CC?
-            '''
-        print("\n\nZJ's test begin")
-        matrix = self.data_mat
-        # diagonal elements:
-        print("negative elements?")
-        print(CC.diagonal().min() < 0.0)
-        print("\n")
-        evals_CC, evecs_CC = np.linalg.eigh(CC)
-        n_neg = (evals_CC < 0).sum()
-        n_tot = len(evals_CC)
-        print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
-        print("ZJ's test finished\n\n")
+        part1 = X.dot(self.C_GP.dot(X.T))
+        part2 = self.data_mat
+        CC = part2 #+ part2
+        np.save(debug_outdir+'CC_new.npy', CC)
 
         try:
             factor, flag = cho_factor(CC)
         except np.linalg.linalg.LinAlgError:
             print("Spectrum:", self.spectrum_id, "Order:", self.order)
             self.CC_debugger(CC)
+            np.save(debug_outdir+'X.npy', X)
+            np.save(debug_outdir+'part1.npy', part1)
+            np.save(debug_outdir+'part2.npy', part2)
+            np.save(debug_outdir+'cheb.npy', self.chebyshevSpectrum.k)
+            np.save(debug_outdir+'flux_mean.npy', self.flux_mean)
+            np.save(debug_outdir+'flux_std.npy', self.flux_std)
+            np.save(debug_outdir+'C_GP.npy', self.C_GP)
             raise
 
         try:
-            R = self.fl - self.Omega * self.flux_scalar * (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+
+            model1 = (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+            R = self.fl - model1
 
             logdet = np.sum(2 * np.log((np.diag(factor))))
             self.lnprob = -0.5 * (np.dot(R, cho_solve((factor, flag), R)) + logdet)
@@ -224,36 +216,24 @@ class Order:
             print("Spectrum:", self.spectrum_id, "Order:", self.order)
             raise
 
-    def CC_debugger(self, CC):
-        '''
-        Special debugging information for the covariance matrix decomposition.
-        '''
-        print('{:-^60}'.format('CC_debugger'))
-        print("See https://github.com/iancze/Starfish/issues/26")
-        print("Covariance matrix at a glance:")
-        if (CC.diagonal().min() < 0.0):
-            print("- Negative entries on the diagonal:")
-            print("\t- Check sigAmp: should be positive")
-            print("\t- Check uncertainty estimates: should all be positive")
-        elif np.any(np.isnan(CC.diagonal())):
-            print("- Covariance matrix has a NaN value on the diagonal")
-        else:
-            if not np.allclose(CC, CC.T):
-                print("- The covariance matrix is highly asymmetric")
 
-            #Still might have an asymmetric matrix below `allclose` threshold
-            evals_CC, evecs_CC = np.linalg.eigh(CC)
-            n_neg = (evals_CC < 0).sum()
-            n_tot = len(evals_CC)
-            print("- There are {} negative eigenvalues out of {}.".format(n_neg, n_tot))
-            mark = lambda val: '>' if val < 0 else '.'
-                                                                                
-            print("Covariance matrix eigenvalues:")
-            print(*["{: >6} {:{fill}>20.3e}".format(i, evals_CC[i], fill=mark(evals_CC[i])) for i in range(10)], sep='\n')
-            print('{: >15}'.format('...'))
-            print(*["{: >6} {:{fill}>20.3e}".format(n_tot-10+i, evals_CC[-10+i], fill=mark(evals_CC[-10+i])) for i in range(10)], sep='\n')
-        print('{:-^60}'.format('-'))
+    def draw_save(self):
+        '''
+        Return the lnprob using the current version of the C_GP matrix, data matrix,
+        and other intermediate products.
+        '''
 
+        self.lnprob_last = self.lnprob
+
+        X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
+        model1 = (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
+
+        part1 = X.dot(self.C_GP.dot(X.T))
+        part2 = self.data_mat
+        CC = part2 #+ part2
+        np.save('CC_new.npy', CC)
+
+        return model1
 
     def update_Theta(self, p):
         '''
@@ -263,8 +243,8 @@ class Order:
         :type p: model.ThetaParam
         '''
 
-        # dirty HACK to get fixed logg
-        # Simply fixes the log g value if needed
+        # durty HACK to get fixed logg
+        # Simply fixes the middle value to be 4.29
         # Check to see if it exists, as well
         fix_logg = Starfish.config.get("fix_logg", None)
         if fix_logg is not None:
@@ -322,12 +302,20 @@ class Order:
         # to clear allocated memory for each iteration.
         gc.collect()
 
+        # Adjust flux_mean and flux_std by Omega
+        #Omega = 10**p.logOmega
+        #self.flux_mean *= Omega
+        #self.flux_std *= Omega
+
         # Now update the parameters from the emulator
         # If pars are outside the grid, Emulator will raise C.ModelError
         self.emulator.params = p.grid
         self.mus, self.C_GP = self.emulator.matrix
         self.flux_scalar = self.emulator.absolute_flux
         self.Omega = 10**p.logOmega
+        self.flux_mean *= (self.Omega*self.flux_scalar)
+        self.flux_std *= (self.Omega*self.flux_scalar)
+        
 
 
 class SampleThetaPhi(Order):
@@ -406,8 +394,6 @@ class SampleThetaPhi(Order):
         # Store the previous data matrix in case we want to revert later
         self.data_mat_last = self.data_mat
         self.data_mat = get_dense_C(self.wl, k_func=k_func, max_r=max_r) + p.sigAmp*self.sigma_mat
-# ----
-
 
 ################ MAIN BODY ################
 
@@ -418,128 +404,83 @@ spectrum_id, order_key = 0, 0 # ??? what is spectrum id and order_key?
 fix_c0 = True
 # --
 
-
-## 1. Initial parameter settings
-''' initial parameters
-
-    grid [Teff, logg]
-    vz
-    vsini
-    logOmega
-    Chebyshev function coefficients (we assume c0 is fixed at 1.0 so there are one less free parameters. e.g., 4-th order Chebyshev function will only have 3 free parameters with c0=1)
-    sigAmp
-    logAmp
-    l
-    '''
-# 1.1 Load config.yaml
-# - Theta
-theta_start = Starfish.config["Theta"]
-theta_jump = Starfish.config["Theta_jump"]
-# - Cheb & Phi
-cheb_start = np.zeros((Starfish.config["cheb_degree"]-1,)) if fix_c0 else np.zeros((Starfish.config["cheb_degree"],))
-cheb_jump = np.ones_like(cheb_start) * Starfish.config["cheb_jump"]
-phi_start = [Starfish.config["Phi"]["sigAmp"], Starfish.config["Phi"]["logAmp"], Starfish.config["Phi"]["l"]]
-phi_jump = [Starfish.config["Phi_jump"]["sigAmp"], Starfish.config["Phi_jump"]["logAmp"], Starfish.config["Phi_jump"]["l"]]
-# --
-# 1.2 Combine initial settings to feed emcee
-p0 = np.hstack((np.array(theta_start["grid"]),
-                theta_start["vz"],
-                theta_start["vsini"],
-                theta_start["logOmega"],
-                cheb_start,
-                np.array(phi_start)
-                ))
-p0_std = np.hstack((np.array(theta_jump["grid"]),
-                    theta_jump["vz"],
-                    theta_jump["vsini"],
-                    theta_jump["logOmega"],
-                    cheb_jump,
-                    np.array(phi_jump)
-                    ))
-# --
-# 1.3 Save initial settings
-# - Theta
-theta_par = ThetaParam(grid=p0[0:2], vz=p0[2], vsini=p0[3], logOmega=p0[4])
-theta_par.save()
-# - Phi (including Cheb)
-phi_par = PhiParam(spectrum_id, order_key, fix_c0, p0[5:8], p0[8], p0[9], p0[10])
-phi_par.save()
-# --
-
-
-## 2. Run the program
+# 1. Run the program.
 model = SampleThetaPhi(debug=True)
 model.initialize((spectrum_id, order_key))
-# --
+# observed spectrum
+obs_wls = model.wl
+obs_fls = model.fl
+obs_sigmas = model.sigma
 
+def lnprob_all(p):
+    pars1 = ThetaParam(grid=p[0:2], vz=p[2], vsini=p[3], logOmega=p[4])
+    model.update_Theta(pars1)
+    # hard code npoly=3 (for fixc0 = True with npoly=4)
+    pars2 = PhiParam(0, 0, True, p[5:8], p[8], p[9], p[10])
+    model.update_Phi(pars2)
+    draw = model.draw_save()
+    return draw
 
-## 3. Posterior:
-# 3.1 Likelihood function
-def lnlike(p):
-    try:
-        ''' grid contains only two parameters for BD: Teff and log g
-            
-            Here we assume:
-            spectrum_id =0
-            order_key = 0
-            fix_c0 = True
+if args.config:
+    df_out = pd.DataFrame({'wl':wl, 'data':data})
 
-            '''
-        pars1 = ThetaParam(grid=p[0:2], vz=p[2], vsini=p[3], logOmega=p[4])
-        pars1.save()
-        model.update_Theta(pars1)
-        # hard code npoly=3 (for fixc0 = True with npoly=4)
-        pars2 = PhiParam(0, 0, True, p[5:8], p[8], p[9], p[10])
-        pars2.save()
-        model.update_Phi(pars2)
-        lnp = model.evaluate()
-        return lnp
-    except C.ModelError:
-        model.logger.debug("ModelError in stellar parameters, sending back -np.inf {}".format(p))
-        return -np.inf
-# --
-# 3.2 Prior function
-def lnprior(p):
-    ''' sigAmp must be positive'''
-    if not (p[8] > 0):
-        return -np.inf
-    else:
-        return 0
-# --
-# 3.3 posterior probability:
-def lnprob(p):
-    lp = lnprior(p)
-    if not np.isfinite(lp):
-        return -np.inf
-    return lp + lnlike(p)
-# --
-# ----
+    with open('s0_o0phi.json') as f:
+        s0phi = json.load(f)
 
+    psl = (Starfish.config['Theta']['grid']+
+          [Starfish.config['Theta'][key] for key in ['vz', 'vsini', 'logOmega']] +
+           s0phi['cheb'] +
+          [s0phi['sigAmp']] + [s0phi['logAmp']] + [s0phi['l']])
+    ps = np.array(psl)
+    df_out['model_composite'] = lnprob_all(ps)  
+    
+    df_out.to_csv('spec_config.csv', index=False) 
 
-## 4. Start MCMC fitting
-import emcee
-
-ndim = len(p0)
-nwalkers = 4 * ndim
-
-if args.resume:
-    p0_ball = np.load("emcee_chain.npy")[:,-1,:]
 else:
-    p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
+    draws = []
+    # load chain
+    star_chain = np.load(star_outdir+"emcee_chain.npy")
+    param_keywords = ["Teff", "log-g", "vz", "vsini", "logOmega", "Cheb_1", "Cheb_2", "Cheb_3", "sigAmp", "logAmp", "l"]
+    # remove the burn-in phase
+    nwalkers, nsamples, ndim = star_chain.shape
+    if (args.f_burnin is not None) and (0 <= args.f_burnin < 1):
+        burned_starchain = star_chain[:, int(nsamples * args.f_burnin):, :]
+    else:
+        print("warning: f_burnin should be in [0, 1) - using the entire chain...")
+        burned_starchain = star_chain
+    flatchain_star = burned_starchain.reshape((-1, ndim))
 
-n_threads = multiprocessing.cpu_count()
-sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=n_threads)
+    # derive final parameters
+    star_pars = np.median(flatchain_star, axis=0)
+    star_pars_upper_error = np.percentile(flatchain_star, 84, axis=0) - star_pars
+    star_pars_lower_error = star_pars - np.percentile(flatchain_star, 16, axis=0)
 
+    # triangle plot for the burned-in flatchain
+    import corner
+    star_fig = corner.corner(flatchain_star[:,0:5], labels=param_keywords[:5], show_titles=True)
+    star_fig.savefig(sfinfer_plotdir+'star_chain_corner.png', dpi=1000)
+    nuisance_fig = corner.corner(flatchain_star[:,5:], labels=param_keywords[5:], show_titles=True)
+    nuisance_fig.savefig(sfinfer_plotdir+'nuisance_chain_corner.png', dpi=1000)
 
-nsteps = args.samples
-ninc = args.incremental_save
-for i, (pos, lnp, state) in enumerate(sampler.sample(p0_ball, iterations=nsteps)):
-    if (i+1) % ninc == 0:
-        time.ctime() 
-        t_out = time.strftime('%Y %b %d,%l:%M %p') 
-        print("{0}: {1:}/{2:} = {3:.1f}%".format(t_out, i, nsteps, 100 * float(i) / nsteps))
-        np.save('temp_emcee_chain.npy',sampler.chain)
+    # model flux
+    mod_fls = lnprob_all(star_pars)
+    # compare with correct answer
+    comp_star_pars = 1.0 * star_pars
+    comp_star_pars[0] = 810
+    comp_star_pars[1] = 5.15
+    comp_mod_fls = lnprob_all(comp_star_pars)
 
-np.save('emcee_chain.npy',sampler.chain)
+    # write an output data file containing observed and model spectra
+    df_star = pd.DataFrame({'obs_wls':obs_wls, 'obs_fls':obs_fls, 'mod_fls':mod_fls, 'comp_mod_fls':comp_mod_fls})
+    df_star.to_csv(star_outdir+'osbsmod_spec_comparison.csv', index=False)
 
-print("The end.")
+    # claim the fitting results
+    print("\nFitting results -")
+    for item_index in range(0, ndim):
+        print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"%(param_keywords[item_index], star_pars[item_index], star_pars_upper_error[item_index], star_pars_lower_error[item_index]))
+
+    # generate json files for plotting - following the original plot_star.py
+    my_dict = {"wl": obs_wls.tolist(), "data":obs_fls.tolist(), "sigma":obs_sigmas.tolist(), "model": mod_fls.tolist(), "resid":(obs_fls-mod_fls).tolist(), "spectrum_id":spectrum_id, "order":order_key}
+    spec_json_file = Starfish.specfmt.format(spectrum_id, order_key) + "spec.json"
+    with open(spec_json_file, 'w') as f:
+        json.dump(my_dict, f, indent=2)
