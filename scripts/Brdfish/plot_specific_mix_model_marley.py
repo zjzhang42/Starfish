@@ -19,7 +19,7 @@ import multiprocessing
 import time
 import numpy as np
 import Starfish
-from Starfish.model import ThetaParam, PhiParam
+from Starfish.model_BD import ThetaParam, PhiParam
 
 import argparse
 parser = argparse.ArgumentParser(prog="plot_many_mix_models_marley.py", description="Plot many mixture models.")
