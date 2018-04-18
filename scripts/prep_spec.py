@@ -20,7 +20,7 @@ import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
 
 import argparse
-parser = argparse.ArgumentParser(prog="prep_spec.py", description="Convert a raw spectra data file into a HDF5 format.")
+parser = argparse.ArgumentParser(prog="prep_spec.py", description="Convert a raw spectra data file into a HDF5 format, with a required flux calibration based on user-defined J/H/K magnitudes.")
 parser.add_argument("--create", action="store_true", help="Create the HDF5 spectra file")
 parser.add_argument("--u_wls", type=str, default='micron', help="units of wavelength; chosen from [micron], [Angstrom]")
 parser.add_argument("--u_fls", type=str, default='erg/s/cm2/A', help="units of flux and flux_err; chosen from [erg/s/cm2/A], [W/m2/m]")
