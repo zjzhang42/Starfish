@@ -260,6 +260,8 @@ if args.optimize == "emcee":
 
     # Save the last position of the walkers
     np.save(emulator_outdir+"walkers_emcee.npy", pos)
+
+    # Save the emcee chain
     if args.resume:
         prev_chain = np.load(emulator_outdir+"eparams_emcee.npy")
         new_chain = np.hstack((prev_chain, sampler.chain))

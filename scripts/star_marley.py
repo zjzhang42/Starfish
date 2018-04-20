@@ -551,6 +551,12 @@ for i, (pos, lnp, state) in enumerate(sampler.sample(p0_ball, iterations=nsteps)
         print("{0}: {1:}/{2:} = {3:.1f}%".format(t_out, i, nsteps, 100 * float(i) / nsteps))
         np.save(star_outdir+'temp_emcee_chain.npy',sampler.chain)
 
-np.save(star_outdir+'emcee_chain.npy',sampler.chain)
+# Save the emcee chain
+if args.resume:
+    prev_chain = np.load(emulator_outdir+"emcee_chain.npy")
+    new_chain = np.hstack((prev_chain, sampler.chain))
+    np.save(emulator_outdir+"emcee_chain.npy", new_chain)
+else:
+    np.save(star_outdir+'emcee_chain.npy',sampler.chain)
 
 print("The end.")

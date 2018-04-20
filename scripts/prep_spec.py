@@ -6,6 +6,7 @@
 # Modification History:
 #
 # ZJ Zhang (Feb 24th, 2018)
+# ZJ Zhang (Apr 20th, 2018)    (ADD --- "keyword" option to enable wavecut and/or changing file names)
 #
 #################################################
 
@@ -29,6 +30,7 @@ parser.add_argument("--Jcal", type=float, default=None, help="flux calibration b
 parser.add_argument("--Hcal", type=float, default=None, help="flux calibration based on H-band photometry")
 parser.add_argument("--Kcal", type=float, default=None, help="flux calibration based on K-band photometry")
 parser.add_argument("--calbase", type=str, default=None, help="which band should the calibrated spectra be based on")
+parser.add_argument("--wavecut", type=float, default=None, help="any special requirement for manipulating data? [um]")
 args = parser.parse_args()
 
 
@@ -51,6 +53,16 @@ flux_zp = {"J_2MASS": 3.14e-10,
            "J_MKO":   3.07e-10,
            "H_MKO":   1.12e-10,
            "K_MKO":   4.07e-11}
+# ----
+
+
+def add_wavecut_str(wavecut):
+    ''' add a string in the end of file based on the given keyword'''
+    if wavecut is None:
+        add_str = ""
+    else:
+        add_str = "_wavecut"
+    return add_str
 # ----
 
 
@@ -86,7 +98,7 @@ def spec_read(infile):
 # ----
 
 
-def spec_cal(wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath):
+def spec_cal(objname, wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath, wavecut):
     ''' calibrate the spectrum based on each given magnitude with a given photometric system
         and save the calibrated spectrum in to a file
 
@@ -95,7 +107,7 @@ def spec_cal(wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath):
         - flux: erg/s/cm2/A
         - flux err: erg/s/cm2/A
         '''
-    print("flux calibration")
+    print("flux calibration based on %s"%(phot_sys))
     for band in cal_key:
         if cal_mag[band] is None:
             print("please provide magnitudes for %s_%s band."%(band, phot_sys))
@@ -132,11 +144,11 @@ def spec_cal(wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath):
             col_sigmas = fits.Column(name='sigmas', format='D', array=sigmas_cal)
             combo_col = fits.ColDefs([col_wls, col_fls, col_sigmas])
             HDU = fits.BinTableHDU.from_columns(combo_col)
-            HDU.writeto(calpath + 'flux_cal/' + 'cal_%s_%s.fits'%(band, phot_sys), overwrite=True)
+            HDU.writeto(calpath + 'flux_cal/' + '%s_cal_%s_%s%s.fits'%(objname, band, phot_sys, add_wavecut_str(wavecut)), overwrite=True)
 # ----
 
 
-def HDF5_converter(outfile, wls, fls, sigmas, u_wls='micron', u_fls='erg/s/cm2/A'):
+def HDF5_converter(objname, outfile, wls, fls, sigmas, wavecut, u_wls='micron', u_fls='erg/s/cm2/A'):
     ''' save the spectrum into the HDF5 file
         
         the Starfish spectra should have the following units:
@@ -176,14 +188,23 @@ def HDF5_converter(outfile, wls, fls, sigmas, u_wls='micron', u_fls='erg/s/cm2/A
     Sf_sigmas[id_bad_sigmas] = np.abs(Sf_fls[id_bad_sigmas])
     ### nominal mask array - all one's (no mask)
     Sf_mask = np.ones(len(Sf_wls), dtype=int)
+    ### manipulation
+    if wavecut is not None:
+        wavecut_Ang = (wavecut * u.micron).to(u.Angstrom).value
+        if (wavecut_Ang > Sf_wls[0]) and (wavecut_Ang < Sf_wls[-1]):
+            id_cut = np.where(Sf_wls > wavecut_Ang)
+        else:
+            print("warning: the given wavecut is out of the wavelength range of the spectrum... note that the wavecut is in unit of um.")
+    else:
+        id_cut = np.where(Sf_wls > -999) # nominal
     ### save to HDF5
     hdf5_load = h5py.File(outfile, 'w')
-    hdf5_load.create_dataset('wls', data=Sf_wls)
-    hdf5_load.create_dataset('fls', data=Sf_fls)
-    hdf5_load.create_dataset('sigmas', data=Sf_sigmas)
-    hdf5_load.create_dataset('masks', data=Sf_mask)
+    hdf5_load.create_dataset('wls', data=Sf_wls[id_cut])
+    hdf5_load.create_dataset('fls', data=Sf_fls[id_cut])
+    hdf5_load.create_dataset('sigmas', data=Sf_sigmas[id_cut])
+    hdf5_load.create_dataset('masks', data=Sf_mask[id_cut])
     hdf5_load.close()
-    print("HDF5 file created.")
+    print("HDF5 file created for %s."%(objname))
 # ----
 
 
@@ -191,6 +212,7 @@ def HDF5_converter(outfile, wls, fls, sigmas, u_wls='micron', u_fls='erg/s/cm2/A
 # OFFICIAL PROCEDURES
 ######################
 ## load basic information
+Object = Starfish.config["name"]
 cal_dir = Starfish.data["path"]
 raw_spec = Starfish.data["raw_files"]
 hdf5_spec = Starfish.data["files"]
@@ -205,19 +227,19 @@ for (rel_calpath, rel_infile, rel_outfile) in zip(cal_dir, raw_spec, hdf5_spec):
     wls, fls, sigmas = spec_read(infile)
     # flux calibration
     if args.phot is not None:
-        spec_cal(wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath)
+        spec_cal(Object, wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath, args.wavecut)
         args.u_wls = 'micron'
         args.u_fls = 'erg/s/cm2/A'
     # HDF5 conversion
     if args.create==True:
-        calbase_file = calpath + 'flux_cal/cal_%s.fits'%(args.calbase)
+        calbase_file = calpath + 'flux_cal/%s_cal_%s%s.fits'%(Object, args.calbase, add_wavecut_str(args.wavecut))
         # load the calbase file if existed
         if (args.calbase is not None) and (os.path.isfile(calbase_file)):
             wls, fls, sigmas = spec_read(calbase_file)
         # convert to HDF5 file
-        HDF5_converter(outfile, wls, fls, sigmas, u_wls=args.u_wls, u_fls=args.u_fls)
+        HDF5_converter(Object, outfile, wls, fls, sigmas, args.wavecut, u_wls=args.u_wls, u_fls=args.u_fls)
     else:
-        print("no HDF5 file created.")
+        print("no HDF5 file created for %s."%(Object))
 # --
 
 
