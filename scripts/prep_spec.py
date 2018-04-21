@@ -55,17 +55,6 @@ flux_zp = {"J_2MASS": 3.14e-10,
            "K_MKO":   4.07e-11}
 # ----
 
-
-def add_wavecut_str(wavecut):
-    ''' add a string in the end of file based on the given keyword'''
-    if wavecut is None:
-        add_str = ""
-    else:
-        add_str = "_wavecut"
-    return add_str
-# ----
-
-
 def spec_read(infile):
     ''' extract wavelength, flux, and flux_err from the input file
 
@@ -98,7 +87,7 @@ def spec_read(infile):
 # ----
 
 
-def spec_cal(objname, wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath, wavecut):
+def spec_cal(objname, wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath):
     ''' calibrate the spectrum based on each given magnitude with a given photometric system
         and save the calibrated spectrum in to a file
 
@@ -144,7 +133,7 @@ def spec_cal(objname, wls, fls, sigmas, phot_sys, cal_key, cal_mag, calpath, wav
             col_sigmas = fits.Column(name='sigmas', format='D', array=sigmas_cal)
             combo_col = fits.ColDefs([col_wls, col_fls, col_sigmas])
             HDU = fits.BinTableHDU.from_columns(combo_col)
-            HDU.writeto(calpath + 'flux_cal/' + '%s_cal_%s_%s%s.fits'%(objname, band, phot_sys, add_wavecut_str(wavecut)), overwrite=True)
+            HDU.writeto(calpath + 'flux_cal/' + '%s_cal_%s_%s.fits'%(objname, band, phot_sys), overwrite=True)
 # ----
 
 
@@ -227,12 +216,12 @@ for (rel_calpath, rel_infile, rel_outfile) in zip(cal_dir, raw_spec, hdf5_spec):
     wls, fls, sigmas = spec_read(infile)
     # flux calibration
     if args.phot is not None:
-        spec_cal(Object, wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath, args.wavecut)
+        spec_cal(Object, wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath)
         args.u_wls = 'micron'
         args.u_fls = 'erg/s/cm2/A'
     # HDF5 conversion
     if args.create==True:
-        calbase_file = calpath + 'flux_cal/%s_cal_%s%s.fits'%(Object, args.calbase, add_wavecut_str(args.wavecut))
+        calbase_file = calpath + 'flux_cal/%s_cal_%s.fits'%(Object, args.calbase)
         # load the calbase file if existed
         if (args.calbase is not None) and (os.path.isfile(calbase_file)):
             wls, fls, sigmas = spec_read(calbase_file)

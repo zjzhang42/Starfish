@@ -27,7 +27,7 @@ print("The root dir is:\n    ", main_path)
 
 ## create sub-folders
 # 1. notebooks/
-find_dir(main_path + 'notebooks/')
+# after Apr 20, 2018, this program will not create the notebooks/ directory. The `config.yaml` will be directly in the main_path
 # 2. workplace/
 find_dir(main_path + 'workplace/')
 find_dir(main_path + 'workplace/libraries/')
