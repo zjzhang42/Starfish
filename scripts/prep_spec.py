@@ -201,7 +201,7 @@ def HDF5_converter(objname, outfile, wls, fls, sigmas, wavecut, u_wls='micron', 
 # OFFICIAL PROCEDURES
 ######################
 ## load basic information
-Object = Starfish.config["name"]
+object = Starfish.config["name"]
 cal_dir = Starfish.data["path"]
 raw_spec = Starfish.data["raw_files"]
 hdf5_spec = Starfish.data["files"]
@@ -216,19 +216,19 @@ for (rel_calpath, rel_infile, rel_outfile) in zip(cal_dir, raw_spec, hdf5_spec):
     wls, fls, sigmas = spec_read(infile)
     # flux calibration
     if args.phot is not None:
-        spec_cal(Object, wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath)
+        spec_cal(object, wls, fls, sigmas, args.phot, cal_key, cal_mag, calpath)
         args.u_wls = 'micron'
         args.u_fls = 'erg/s/cm2/A'
     # HDF5 conversion
     if args.create==True:
-        calbase_file = calpath + 'flux_cal/%s_cal_%s.fits'%(Object, args.calbase)
+        calbase_file = calpath + 'flux_cal/%s_cal_%s.fits'%(object, args.calbase)
         # load the calbase file if existed
         if (args.calbase is not None) and (os.path.isfile(calbase_file)):
             wls, fls, sigmas = spec_read(calbase_file)
         # convert to HDF5 file
-        HDF5_converter(Object, outfile, wls, fls, sigmas, args.wavecut, u_wls=args.u_wls, u_fls=args.u_fls)
+        HDF5_converter(object, outfile, wls, fls, sigmas, args.wavecut, u_wls=args.u_wls, u_fls=args.u_fls)
     else:
-        print("no HDF5 file created for %s."%(Object))
+        print("no HDF5 file created for %s."%(object))
 # --
 
 
