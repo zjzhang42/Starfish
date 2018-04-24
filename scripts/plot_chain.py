@@ -97,25 +97,25 @@ def starinfer_corner(chain_file, star_corner_figure_path, nuisance_corner_figure
 ######################
 # OFFICIAL PROCEDURES
 ######################
-## load basic information
+## 0. load basic information
 object = Starfish.config["name"]
 outdir = Starfish.config["outdir"]
 plotdir = Starfish.config["plotdir"]
 
-## check input chain file
+## 1. plotting's
 chain_file = os.path.expandvars(outdir + "%s/%s"%(args.keyword, chain_file_name[args.keyword]))
 if os.path.isfile(chain_file)==False:
     print("error: %s is not found... (hint: 'keyword' should be either 'emulator' or 'star_inference')."%(chain_file))
 else:
-    ## obtain figure path
+    ## 1.1 obtain figure path
     chainevo_figure_path = os.path.expandvars(plotdir + "%s/%s_chain_evo.pdf"%(args.keyword, args.keyword))
-    ## obtain label
+    ## 1.2 obtain label
     if args.keyword=="star_inference":
         labels = labels_option[args.keyword]
-    ## plot emcee walkers as a function of sampling steps
+    ## 1.3 plot emcee walkers as a function of sampling steps
     evolution_chain(object, chain_file, figure_path=chainevo_figure_path, labels=labels, f_burnin=args.f_burnin)
     print("chain evolution plot finished!")
-    ## plot corner plots
+    ## 1.4 plot corner plots
     if args.corner==True:
         if args.keyword=="star_inference":
             # figure path

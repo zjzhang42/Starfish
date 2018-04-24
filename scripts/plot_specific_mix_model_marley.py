@@ -455,19 +455,12 @@ else:
     star_pars_upper_error = np.percentile(flatchain_star, 84, axis=0) - star_pars
     star_pars_lower_error = star_pars - np.percentile(flatchain_star, 16, axis=0)
 
-    # triangle plot for the burned-in flatchain
-    import corner
-    star_fig = corner.corner(flatchain_star[:,0:5], labels=param_keywords[:5], show_titles=True)
-    star_fig.savefig(sfinfer_plotdir+'star_chain_corner.png', dpi=1000)
-    nuisance_fig = corner.corner(flatchain_star[:,5:], labels=param_keywords[5:], show_titles=True)
-    nuisance_fig.savefig(sfinfer_plotdir+'nuisance_chain_corner.png', dpi=1000)
-
     # model flux
     mod_fls = lnprob_all(star_pars)
     # compare with correct answer
     comp_star_pars = 1.0 * star_pars
-    comp_star_pars[0] = 810
-    comp_star_pars[1] = 5.15
+    comp_star_pars[0] = 815
+    comp_star_pars[1] = 5.09
     comp_mod_fls = lnprob_all(comp_star_pars)
 
     # write an output data file containing observed and model spectra

@@ -30,9 +30,10 @@ print("The root dir is:\n    ", main_path)
 # after Apr 20, 2018, this program will not create the notebooks/ directory. The `config.yaml` will be directly in the main_path
 # 2. workplace/
 find_dir(main_path + 'workplace/')
-find_dir(main_path + 'workplace/libraries/')
 find_dir(main_path + 'workplace/data/')
 find_dir(main_path + 'workplace/data/flux_cal/')
+find_dir(main_path + 'workplace/libraries/')
+find_dir(main_path + 'workplace/priors')
 find_dir(main_path + 'workplace/plots/')
 find_dir(main_path + 'workplace/plots/processed_grids/')
 find_dir(main_path + 'workplace/plots/pca/')
@@ -42,7 +43,7 @@ find_dir(main_path + 'workplace/output/')
 find_dir(main_path + 'workplace/output/emulator/')
 find_dir(main_path + 'workplace/output/star_debug/')
 find_dir(main_path + 'workplace/output/star_inference/')
-find_dir(main_path + 'workplace/priors')
+find_dir(main_path + 'workplace/resfiles')
 # 3. finish
 print("Setup finish!")
 
