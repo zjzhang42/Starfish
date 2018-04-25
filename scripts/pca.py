@@ -48,23 +48,10 @@ import os
 plotdir = os.path.expandvars(Starfish.config["plotdir"])
 # pca
 pca_plotdir = plotdir + "pca/"
-try:
-    os.stat(pca_plotdir)
-except:
-    os.mkdir(pca_plotdir)
 # emulator
 emulator_plotdir = plotdir + "emulator/"
-try:
-    os.stat(emulator_plotdir)
-except:
-    os.mkdir(emulator_plotdir)
-
 ## output files
 emulator_outdir = os.path.expandvars(Starfish.config["outdir"]) + "emulator/"
-try:
-    os.stat(emulator_outdir)
-except:
-    os.mkdir(emulator_outdir)
 ###################################
 
 

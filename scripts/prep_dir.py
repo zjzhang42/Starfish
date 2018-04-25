@@ -43,7 +43,7 @@ find_dir(main_path + 'workplace/output/')
 find_dir(main_path + 'workplace/output/emulator/')
 find_dir(main_path + 'workplace/output/star_debug/')
 find_dir(main_path + 'workplace/output/star_inference/')
-find_dir(main_path + 'workplace/resfiles')
+find_dir(main_path + 'workplace/results')
 # 3. finish
 print("Setup finish!")
 

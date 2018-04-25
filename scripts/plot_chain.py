@@ -21,7 +21,7 @@ np.seterr(divide='ignore', invalid='ignore')
 
 import argparse
 parser = argparse.ArgumentParser(prog="plot_chain.py", description="plot the emcee chains as a function of sampling steps; also produce corner plots upon optional request.")
-parser.add_argument("--keyword", type=str, default=None, help="types of emcee output chains, options including 'emulator' and 'star_inference'")
+parser.add_argument("--keyword", type=str, default=None, help="types of emcee output chains: 'emulator' and 'star_inference'")
 parser.add_argument("--labels", type=list, default=None, help="y-axis labels for each parameter/dimension of emcee chains")
 parser.add_argument("--f_burnin", type=float, default=0.5, help="burn-in fraction of the emcee chains")
 parser.add_argument("--corner", action="store_true", help="plot the corner plot (only supporting the 'star_inference' mode at the moment)")
