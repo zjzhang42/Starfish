@@ -17,7 +17,7 @@ def multivariate_normal(cov):
     N = cov.shape[0]
     mu = np.zeros((N,))
     result = np.random.multivariate_normal(mu, cov)
-    print("Generated residual")
+    #print("Generated residual")
     return result
 
 def random_draws(cov, num, nprocesses=mp.cpu_count()):
@@ -50,6 +50,7 @@ def std_envelope(spectra):
     std = np.std(spectra, axis=0)
     return -std, std
 
+
 def sigma_envelope(spectra, num_sigma=1):
     '''
     Given a 2D array of spectra, shape (Nspectra, Npix), return the lower and upper boundary corresponding to the x sigma extent.
@@ -61,11 +62,11 @@ def sigma_envelope(spectra, num_sigma=1):
     else:
         upp_perc = norm.cdf(num_sigma)
         low_perc = 1.0 - upp_perc
-    # upper excess (positive)
-    upp_noise = np.percentile(spectra, 100.*upp_perc, axis=0) - np.mean(spectra, axis=0)
     # lower deficit (negative)
-    low_noise = np.percentile(spectra, 100.*low_perc, axis=0) - np.mean(spectra, axis=0)
-    return low_noise, upp_noise
+    noise_low = np.percentile(spectra, 100.*low_perc, axis=0) - np.mean(spectra, axis=0)
+    # upper excess (positive)
+    noise_upp = np.percentile(spectra, 100.*upp_perc, axis=0) - np.mean(spectra, axis=0)
+    return noise_low, noise_upp
 
 
 def visualize_draws(spectra, num=20):
