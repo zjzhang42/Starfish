@@ -1,11 +1,16 @@
+# import standard packages
 import numpy as np
 import multiprocessing as mp
-import Starfish.constants as C
 import csv
 import h5py
 from astropy.table import Table
 from astropy.io import ascii
+from scipy.stats import norm
+
+# import Starfish packages
 import Starfish
+import Starfish.constants as C
+
 
 def multivariate_normal(cov):
     np.random.seed()
@@ -44,6 +49,24 @@ def std_envelope(spectra):
     '''
     std = np.std(spectra, axis=0)
     return -std, std
+
+def sigma_envelope(spectra, num_sigma=1):
+    '''
+    Given a 2D array of spectra, shape (Nspectra, Npix), return the lower and upper boundary corresponding to the x sigma extent.
+    '''
+    # obtain uppper/lower percentile
+    if num_sigma<=0:
+        print("num_sigma should be positive!")
+        return None
+    else:
+        upp_perc = norm.cdf(num_sigma)
+        low_perc = 1.0 - upp_perc
+    # upper excess (positive)
+    upp_noise = np.percentile(spectra, 100.*upp_perc, axis=0) - np.mean(spectra, axis=0)
+    # lower deficit (negative)
+    low_noise = np.percentile(spectra, 100.*low_perc, axis=0) - np.mean(spectra, axis=0)
+    return low_noise, upp_noise
+
 
 def visualize_draws(spectra, num=20):
     '''
