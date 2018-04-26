@@ -54,8 +54,9 @@ args = parser.parse_args()
 #####################################
 
 ### default plotting labels
-labels = [r"$T_{\mathrm{eff}}$", r"$\log{g}$",r"$v_z$", r"$v\sin{i}$", r"$\log{\Omega}$",
-          r"$c^1$", r"$c^2$", r"$c^3$", r"sigAmp", r"logAmp", r"$l$"]
+labels = [r'$T_{\mathrm{eff}}$', r'$\log{g}$',r'$v_z$', r'$v\sin{i}$', r'$\log{\Omega}$',
+          r'$c^1$', r'$c^2$', r'$c^3$', r'sigAmp', r'logAmp', r'$l$']
+print_labels = ['Teff', 'log-g', 'vz', 'vsini', 'logOmega', 'c1', 'c2', 'c3', 'sigAmp', 'logAmp', 'l']
 default_sn_spl_id = 5  # stellar parameters for <5 and nuisance for >=5 in the final chain
 # --
 
@@ -133,10 +134,10 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     ### 1. obtain the best-fit parameters
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     star_pars = np.median(flatchain, axis=0)
-    star_pars_upper_error = np.percentile(flatchain, 84, axis=0) - star_pars
-    star_pars_lower_error = star_pars - np.percentile(flatchain, 16, axis=0)
+    star_pars_upp_err = np.percentile(flatchain, 84, axis=0) - star_pars
+    star_pars_low_err = star_pars - np.percentile(flatchain, 16, axis=0)
     # final parameters:
-    final_param = np.vstack((star_pars, star_pars_upper_error, star_pars_lower_error))
+    final_param = np.vstack((star_pars, star_pars_upp_err, star_pars_low_err))
     Teff = final_param[:, 0]
     logg = final_param[:, 1]
     vz = final_param[:, 2]
@@ -148,6 +149,11 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     nuis_sigAmp = final_param[:, 8]
     nuis_logAmp = final_param[:, 9]
     nuis_l = final_param[:, 10]
+    # claim the fitting results
+    print("Fitting results -")
+    for item_index in range(0, len(star_pars)):
+        print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"
+              %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
     star_model = SampleThetaPhi(debug=True)
     star_model.initialize((0, 0))
