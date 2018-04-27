@@ -58,10 +58,10 @@ DataSpectra = [DataSpectrum.open(os.path.expandvars(file), orders=Starfish.data[
 # list of keys from 0 to (nspectra - 1) Used for indexing purposes.
 spectra_keys = np.arange(len(DataSpectra))
 
-#Instruments are provided as one per dataset
+# Instruments are provided as one per dataset
 Instruments = [eval("Starfish.grid_tools." + inst)() for inst in Starfish.data["instruments"]]
 
-
+# Set up the logger
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s", filename=star_outdir+"{}log.log".format(
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
 

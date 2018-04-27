@@ -177,21 +177,25 @@ def HDF5_converter(objname, outfile, wls, fls, sigmas, wavecut, u_wls='micron', 
     Sf_sigmas[id_bad_sigmas] = np.abs(Sf_fls[id_bad_sigmas])
     ### nominal mask array - all one's (no mask)
     Sf_mask = np.ones(len(Sf_wls), dtype=int)
-    ### manipulation
+    ### data filtering
+    # wavelength range for emulator
+    grid_wls_range = Starfish.grid["wl_range"]
+    print("...pruning spectra by removing NaN flux and out-of-range wavelengths...")
     if wavecut is not None:
+        print("...wavelength cutoff for lambda>%f um..."%(wavecut))
         wavecut_Ang = (wavecut * u.micron).to(u.Angstrom).value
         if (wavecut_Ang > Sf_wls[0]) and (wavecut_Ang < Sf_wls[-1]):
-            id_cut = np.where(Sf_wls > wavecut_Ang)
+            id_final = np.where( (Sf_wls > wavecut_Ang) & (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) )
         else:
             print("warning: the given wavecut is out of the wavelength range of the spectrum... note that the wavecut is in unit of um.")
     else:
-        id_cut = np.where(Sf_wls > -999) # nominal
+        id_final = np.where( (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) )
     ### save to HDF5
     hdf5_load = h5py.File(outfile, 'w')
-    hdf5_load.create_dataset('wls', data=Sf_wls[id_cut])
-    hdf5_load.create_dataset('fls', data=Sf_fls[id_cut])
-    hdf5_load.create_dataset('sigmas', data=Sf_sigmas[id_cut])
-    hdf5_load.create_dataset('masks', data=Sf_mask[id_cut])
+    hdf5_load.create_dataset('wls', data=Sf_wls[id_final])
+    hdf5_load.create_dataset('fls', data=Sf_fls[id_final])
+    hdf5_load.create_dataset('sigmas', data=Sf_sigmas[id_final])
+    hdf5_load.create_dataset('masks', data=Sf_mask[id_final])
     hdf5_load.close()
     print("HDF5 file created for %s."%(objname))
 # ----
