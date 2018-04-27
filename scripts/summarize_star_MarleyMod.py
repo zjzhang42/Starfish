@@ -39,6 +39,7 @@ parser.add_argument("--store", action="store_true", help="save the fitting resul
 parser.add_argument("--spec", action="store_true", help="plot and compare the observed and best-fit spectra; run `--store` before this option.")
 parser.add_argument("--num_nd", type=int, default=100, help="number of noise draw when producing noise spectrum.")
 parser.add_argument("--format", type=str, default='png', help="format of output figures")
+parser.add_argument("--dpi", type=str, default=None, help="dpi of output figures")
 # specially for the "usr" mode
 parser.add_argument("--object", type=str, default='object', help="user-defined object name.")
 parser.add_argument("--chain_file", type=str, default=None, help="emcee chain files.")
@@ -61,7 +62,7 @@ default_sn_spl_id = 5  # stellar parameters for <5 and nuisance for >=5 in the f
 # --
 
 ### range of wavelengths with smaller noise, therefore could be used to define the range of plots
-wls_range = [12000, 24000]
+wls_range = [9000, 24000]
 y_scalar = 1.2
 # --
 
@@ -80,7 +81,7 @@ def burnin_flat(chain, f_burnin=0.5):
 # ----
 
 
-def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png'):
+def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi=None):
     ''' plot the chain values as a function of sampling steps'''
     ### 1. load chains
     chain = np.load(chain_file)
@@ -98,12 +99,12 @@ def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png'):
     figure.suptitle(object, fontsize=20)
     # save plot
     chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_chain.%s"%(format))
-    figure.savefig(chain_figure_path, format=format)
+    figure.savefig(chain_figure_path, format=format, dpi=dpi)
     print("chain plot finished!")
 # ----
 
 
-def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png'):
+def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi=None):
     ''' plot corner figures for stellar and nuisance parameters'''
     ### 1. obtain burned-in flat chain
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
@@ -112,13 +113,13 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png'):
     star_fig.suptitle(object, fontsize=20)
     # save plot
     star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_stellar_corner.%s"%(format))
-    star_fig.savefig(star_corner_figure_path, format=format)
+    star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
     ### 3. corner for nuisance parameters:
     nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True)
     nuisance_fig.suptitle(object, fontsize=20)
     # save plot
     nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_nuisance_corner.%s"%(format))
-    nuisance_fig.savefig(nuisance_corner_figure_path, format=format)
+    nuisance_fig.savefig(nuisance_corner_figure_path, format=format, dpi=dpi)
     print("corner plot finished!")
 # ----
 
@@ -225,7 +226,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
 
 
 
-def comp_star_spec(object, resdir, resfile, format='png'):
+def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
     ''' compare the observed and model spectra by reading the resfile'''
     ### 1. check if resfile exists
     if os.path.isfile(os.path.expandvars(resfile))==False:
@@ -273,7 +274,7 @@ def comp_star_spec(object, resdir, resfile, format='png'):
         # save
         figure.subplots_adjust()
         compspec_figure_path = os.path.expandvars(resdir + "%s_spec.%s"%(object, format))
-        figure.savefig(compspec_figure_path, format=format)
+        figure.savefig(compspec_figure_path, format=format, dpi=dpi)
         print("spectra comparison finished!")
 # ----
 
@@ -309,16 +310,16 @@ if os.path.isfile(chain_file)==False:
 else:
     ## 1. plot chain
     if args.chain:
-        plot_star_chain(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format)
+        plot_star_chain(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format, dpi=args.dpi)
     ## 2. plot corner
     if args.corner:
-        plot_star_corner(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format)
+        plot_star_corner(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format, dpi=args.dpi)
     ## 3. store results
     if args.store:
         store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd)
     ## 4. compare spectra
     if args.spec:
-        comp_star_spec(object, resdir, resfile, format=args.format)
+        comp_star_spec(object, resdir, resfile, format=args.format, dpi=args.dpi)
 # ----
 
 

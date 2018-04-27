@@ -185,11 +185,11 @@ def HDF5_converter(objname, outfile, wls, fls, sigmas, wavecut, u_wls='micron', 
         print("...wavelength cutoff for lambda>%f um..."%(wavecut))
         wavecut_Ang = (wavecut * u.micron).to(u.Angstrom).value
         if (wavecut_Ang > Sf_wls[0]) and (wavecut_Ang < Sf_wls[-1]):
-            id_final = np.where( (Sf_wls > wavecut_Ang) & (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) )
+            id_final = np.where( (Sf_wls > wavecut_Ang) & (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) & (np.isnan(Sf_fls)==False) )
         else:
             print("warning: the given wavecut is out of the wavelength range of the spectrum... note that the wavecut is in unit of um.")
     else:
-        id_final = np.where( (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) )
+        id_final = np.where( (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) & (np.isnan(Sf_fls)==False) )
     ### save to HDF5
     hdf5_load = h5py.File(outfile, 'w')
     hdf5_load.create_dataset('wls', data=Sf_wls[id_final])

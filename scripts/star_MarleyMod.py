@@ -27,6 +27,7 @@ import time
 
 # import Starfish packages
 import Starfish
+import Starfish.constants as C
 from Starfish.model_BD import ThetaParam, PhiParam
 
 import argparse
