@@ -24,13 +24,13 @@ np.seterr(divide='ignore', invalid='ignore')
 
 # import Starfish packages
 import Starfish
-from star_class import SampleThetaPhi
+from star_glocvar_class import SampleThetaPhiLines
 from Starfish.model_BD import ThetaParam, PhiParam
 from Starfish.utils import random_draws, sigma_envelope
 
 
 import argparse
-parser = argparse.ArgumentParser(prog="summarize_star_MarleyMod.py", description="summarize the fitting results from star_MarleyMod.py, including observed spectra (wls + fls), best-fit parameters with uncertainties, best-fit model flux, and covariance matrix.")
+parser = argparse.ArgumentParser(prog="summarize_star_glocvar_MarleyMod.py", description="summarize the fitting results from star_MarleyMod.py, including observed spectra (wls + fls), best-fit parameters with uncertainties, best-fit model flux, and covariance matrix.")
 parser.add_argument("--mode", type=str, default='std', help="mode of running this program, including the standard mode ('std') and user-input mode ('usr'); under the 'usr' mode, the input chain files and output files are defined by the user")
 parser.add_argument("--f_burnin", type=float, default=0.5, help="burn-in fraction of the emcee chains.")
 parser.add_argument("--chain", action="store_true", help="plot the chain values as a function of sampling steps.")
@@ -306,9 +306,9 @@ else:
     outdir = Starfish.config["outdir"]
     plotdir = Starfish.config["plotdir"]
     resdir = Starfish.config["resdir"]["path"]
-    resfile = resdir + Starfish.config["resdir"]["resfile"]
-    specfile = resdir + Starfish.config["resdir"]["specfile"]
-    chain_file = os.path.expandvars(outdir + "star_inference/emcee_chain.npy")
+    resfile = resdir + "glocvar/" + Starfish.config["resdir"]["resfile"]
+    specfile = resdir + "glocvar/" + Starfish.config["resdir"]["specfile"]
+    chain_file = os.path.expandvars(outdir + "glocvar/" + "emcee_chain.npy")
 
 ## check the output chain file
 if os.path.isfile(chain_file)==False:

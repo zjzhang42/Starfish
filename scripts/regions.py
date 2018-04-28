@@ -22,7 +22,7 @@ wl = np.array(read["wl"])
 # model = np.array(read["model"])
 residuals = np.array(read["resid"])
 spectrum_id = read["spectrum_id"]
-order = read["order"]
+order = read["order"]
 
 # array that specifies if a pixel is already covered.
 # to start, it should be all False

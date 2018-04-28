@@ -15,7 +15,7 @@
 # ----
 
 # import master package
-from star_class import SampleThetaPhi
+from star_glocvar_class import SampleThetaPhiLines
 
 # import standard packages
 import numpy as np
@@ -28,10 +28,10 @@ import time
 # import Starfish packages
 import Starfish
 import Starfish.constants as C
-from Starfish.model_BD import ThetaParam, PhiParam
+from Starfish.model_glocvar_BD import ThetaParam, PhiParam
 
 import argparse
-parser = argparse.ArgumentParser(prog="star_MarleyMod.py", description="Run Starfish fitting model in single order mode with many walkers.")
+parser = argparse.ArgumentParser(prog="star_glocvar_MarleyMod.py", description="Run Starfish fitting model in single order mode with many walkers.")
 parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
@@ -40,7 +40,8 @@ args = parser.parse_args()
 
 ### output path setups - ZJ Zhang
 ## output files
-star_outdir = os.path.expandvars(Starfish.config["outdir"]) + "star_inference/"
+emulator_outdir = os.path.expandvars(Starfish.config["outdir"]) + "emulator/"
+star_glocvar_outdir = os.path.expandvars(Starfish.config["outdir"]) + "glocvar/"
 ###################################
 
 
@@ -71,37 +72,60 @@ theta_jump = Starfish.config["Theta_jump"]
 # - Cheb & Phi
 cheb_start = np.zeros((Starfish.config["cheb_degree"]-1,)) if fix_c0 else np.zeros((Starfish.config["cheb_degree"],))
 cheb_jump = np.ones_like(cheb_start) * Starfish.config["cheb_jump"]
-phi_start = [Starfish.config["Phi"]["sigAmp"], Starfish.config["Phi"]["logAmp"], Starfish.config["Phi"]["l"]]
-phi_jump = [Starfish.config["Phi_jump"]["sigAmp"], Starfish.config["Phi_jump"]["logAmp"], Starfish.config["Phi_jump"]["l"]]
+phi_start = np.array([Starfish.config["Phi"]["sigAmp"], Starfish.config["Phi"]["logAmp"], Starfish.config["Phi"]["l"]])
+phi_jump = np.array([Starfish.config["Phi_jump"]["sigAmp"], Starfish.config["Phi_jump"]["logAmp"], Starfish.config["Phi_jump"]["l"]])
 # --
+# - region
+region_number = Starfish.config["region_number"]
+region_start = np.array([])
+region_jump = np.array([])
+for index in range(0,region_number):
+    next_region_start = Starfish.config["region_params"]["region_%d"%(index+1)]
+    next_region_jump = Starfish.config["region_jump"]["region_%d"%(index+1)]
+    region_start = np.hstack((region_start,
+                              np.array([next_region_start["logAmp_%d"%(index+1)], next_region_start["mu_%d"%(index+1)], next_region_start["sigma_%d"%(index+1)]])))
+    region_jump = np.hstack((region_jump,
+                             np.array([next_region_jump["logAmp_%d"%(index+1)], next_region_jump["mu_%d"%(index+1)], next_region_jump["sigma_%d"%(index+1)]])))
 # 1.2 Combine initial settings to feed emcee
 p0 = np.hstack((np.array(theta_start["grid"]),
                 theta_start["vz"],
                 theta_start["vsini"],
                 theta_start["logOmega"],
                 cheb_start,
-                np.array(phi_start)
-                ))
+                np.array(phi_start),
+                region_start))
 p0_std = np.hstack((np.array(theta_jump["grid"]),
                     theta_jump["vz"],
                     theta_jump["vsini"],
                     theta_jump["logOmega"],
                     cheb_jump,
-                    np.array(phi_jump)
-                    ))
+                    np.array(phi_jump),
+                    region_jump))
 # --
 # 1.3 Save initial settings
 # - Theta
-theta_par = ThetaParam(grid=p0[0:2], vz=p0[2], vsini=p0[3], logOmega=p0[4])
+theta_par = ThetaParam(grid=p0[0:2],
+                       vz=p0[2],
+                       vsini=p0[3],
+                       logOmega=p0[4])
 theta_par.save()
 # - Phi (including Cheb)
-phi_par = PhiParam(spectrum_id, order_key, fix_c0, p0[5:8], p0[8], p0[9], p0[10])
+phi_par = PhiParam(spectrum_id=spectrum_id,
+                   order=order_key,
+                   fix_c0=fix_c0,
+                   cheb=p0[5:8],
+                   sigAmp=p0[8],
+                   logAmp=p0[9],
+                   l=p0[10],
+                   regions=p0[11:].reshape((-1,3)))
 phi_par.save()
 # --
 
+## below should change notice the regions in emcee is 1-D but Starfish reads as 2-D...
+
 
 # 2. Run the program.
-model = SampleThetaPhi(debug=True)
+model = SampleThetaPhiLines(debug=True)
 model.initialize((spectrum_id, order_key))
 
 
@@ -109,10 +133,20 @@ model.initialize((spectrum_id, order_key))
 # 3.1 Likelihood function
 def lnlike(p):
     try:
-        pars1 = ThetaParam(grid=p[0:2], vz=p[2], vsini=p[3], logOmega=p[4])
+        # stellar parameters
+        pars1 = ThetaParam(grid=p[0:2],
+                           vz=p[2],
+                           vsini=p[3],
+                           logOmega=p[4])
         model.update_Theta(pars1)
-        # hard code npoly=3 (for fixc0 = True with npoly=4)
-        pars2 = PhiParam(0, 0, True, p[5:8], p[8], p[9], p[10])
+        pars2 = PhiParam(spectrum_id=spectrum_id,
+                         order=order_key,
+                         fix_c0=fix_c0,
+                         cheb=p[5:8],
+                         sigAmp=p[8],
+                         logAmp=p[9],
+                         l=p[10],
+                         regions=p[11:].reshape((-1,3)))
         model.update_Phi(pars2)
         lnp = model.evaluate()
         return lnp
@@ -179,14 +213,14 @@ for i, (pos, lnp, state) in enumerate(sampler.sample(p0_ball, iterations=nsteps)
         time.ctime() 
         t_out = time.strftime('%Y %b %d,%l:%M %p') 
         print("{0}: {1:}/{2:} = {3:.1f}%".format(t_out, i, nsteps, 100 * float(i) / nsteps))
-        np.save(star_outdir+'temp_emcee_chain.npy',sampler.chain)
+        np.save(star_glocvar_outdir+'temp_emcee_chain.npy',sampler.chain)
 
 # Save the emcee chain
 if args.resume:
-    prev_chain = np.load(star_outdir+"emcee_chain.npy")
+    prev_chain = np.load(star_glocvar_outdir+"emcee_chain.npy")
     new_chain = np.hstack((prev_chain, sampler.chain))
-    np.save(star_outdir+"emcee_chain.npy", new_chain)
+    np.save(star_glocvar_outdir+"emcee_chain.npy", new_chain)
 else:
-    np.save(star_outdir+'emcee_chain.npy',sampler.chain)
+    np.save(star_glocvar_outdir+'emcee_chain.npy',sampler.chain)
 
 print("The end.")
