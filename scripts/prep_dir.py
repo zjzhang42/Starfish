@@ -16,6 +16,7 @@ from Sys_Tool.Script_command import *
 import argparse
 parser = argparse.ArgumentParser(prog="prep_dir.py", description="Prepare directories for running Starfish")
 parser.add_argument("--root_dir", type=str, default='./', help="units of wavelength; chosen from [micron], [Angstrom]")
+parser.add_argument("--glocvar", action="store_true", help="Add Gaussian local variance")
 args = parser.parse_args()
 
 ######################
@@ -43,8 +44,13 @@ find_dir(main_path + 'workplace/output/')
 find_dir(main_path + 'workplace/output/emulator/')
 find_dir(main_path + 'workplace/output/star_debug/')
 find_dir(main_path + 'workplace/output/star_inference/')
-find_dir(main_path + 'workplace/results')
-# 3. finish
+find_dir(main_path + 'workplace/results/')
+# 3. check glocvar keyword
+if args.glocvar:
+    find_dir(main_path + 'workplace/plots/glocvar/')
+    find_dir(main_path + 'workplace/output/glocvar/')
+    find_dir(main_path + 'workplace/results/glocvar/')
+# 4. finish
 print("Setup finish!")
 
 
