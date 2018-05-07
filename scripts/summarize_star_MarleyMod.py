@@ -62,7 +62,7 @@ default_sn_spl_id = 5  # stellar parameters for <5 and nuisance for >=5 in the f
 # --
 
 ### range of wavelengths with smaller noise, therefore could be used to define the range of plots
-wls_range = [9000, 24000]
+wls_range = [9000, 18000]
 y_scalar = 1.2
 # --
 
@@ -135,6 +135,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     ### 0. spectrum id and order key
     spectrum_id = 0
     order_key = 0
+    fix_c0 = True
     ### 1. obtain the best-fit parameters
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     star_pars = np.median(flatchain, axis=0)
@@ -160,10 +161,19 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
               %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
     star_model = SampleThetaPhi(debug=True)
-    star_model.initialize((0, 0))
-    bestfit_theta = ThetaParam(grid=star_pars[0:2], vz=star_pars[2], vsini=star_pars[3], logOmega=star_pars[4])
+    star_model.initialize((spectrum_id, order_key))
+    bestfit_theta = ThetaParam(grid=star_pars[0:2],
+                               vz=star_pars[2],
+                               vsini=star_pars[3],
+                               logOmega=star_pars[4])
     star_model.update_Theta(bestfit_theta)
-    bestfit_phi = PhiParam(0, 0, True, star_pars[5:8], star_pars[8], star_pars[9], star_pars[10])
+    bestfit_phi = PhiParam(spectrum_id=spectrum_id,
+                           order=order_key,
+                           fix_c0=fix_c0,
+                           cheb=star_pars[5:8],
+                           sigAmp=star_pars[8],
+                           logAmp=star_pars[9],
+                           l=star_pars[10])
     star_model.update_Phi(bestfit_phi)
     mod_fls, mod_Covmat = star_model.drawmod_fls_covmat()
     ### 3. obtain the observed spectrum

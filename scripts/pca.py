@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser(description="Create and manipulate a PCA decomp
 parser.add_argument("--create", action="store_true", help="Create a PCA decomposition.")
 
 parser.add_argument("--plot", choices=["reconstruct", "eigenspectra", "priors", "emcee",
-                                       "emulator"], help="reconstruct: plot the original synthetic spectra vs. the PCA reconstructed spectra.\n priors: plot the chosen priors on the parameters emcee: plot the triangle diagram for the result of the emcee optimization. emulator: plot weight interpolations")
+                                       "emulator", "chain"], help="reconstruct: plot the original synthetic spectra vs. the PCA reconstructed spectra.\n priors: plot the chosen priors on the parameters.\n emcee: plot the triangle diagram for the result of the emcee optimization.\n emulator: plot weight interpolations.\n chain: plot the chain values as a function of sampling steps.")
 
 parser.add_argument("--f_burnin", type=float, default=None, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
 
@@ -255,6 +255,32 @@ if args.optimize == "emcee":
         np.save(emulator_outdir+"eparams_emcee.npy", new_chain)
     else:
         np.save(emulator_outdir+"eparams_emcee.npy", sampler.chain)
+
+
+if args.plot == "chain":
+    ''' plot chain values as a function of sampling steps
+        '''
+    ### load chains
+    chain = np.load(emulator_outdir+"eparams_emcee.npy")
+    nwalkers, nsamples, ndim = chain.shape
+    print("Emulator training chains: %d walkers, %d samples, %d parameters"%(nwalkers, nsamples, ndim))
+    ### plotting
+    figure, axes = plt.subplots(ndim, 1, sharex=True, figsize=(8, 14))
+    # labels
+    label = [r"$\lambda_{\xi}$"]
+    for i_eigen in range(0,int((ndim-1)/3)):
+        label = label + [r"Amp_%d"%(i_eigen), r"l_Temp_%d"%(i_eigen), r"l_logg_%d"%(i_eigen)]
+    # plot
+    for i in range(0, ndim):
+        axes[i].plot(chain[:, :, i].T, color="k", alpha=0.2)
+        axes[i].yaxis.set_major_locator(MaxNLocator(5))
+        axes[i].set_ylabel(label[i])
+        axes[i].set_xlim([0,nsamples])
+        axes[i].axvline(int(nsamples * args.f_burnin), color='red', linestyle='-') # burn-in cut-off
+    axes[ndim-1].set_xlabel("step number")
+    # save plot
+    figure.savefig(emulator_plotdir+'emulator_chain.png', format='png')
+# ----
 
 
 if args.plot == "emcee":
