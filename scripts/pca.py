@@ -12,6 +12,24 @@
 #################################################
 
 
+
+# import standard packages
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+import multiprocessing as mp
+import numpy as np
+import os
+import time
+
+# import Starfish packages
+import itertools
+import Starfish
+from Starfish import emulator
+from Starfish.grid_tools import HDF5Interface
+from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator
+from Starfish.covariance import Sigma
+
+
 import argparse
 parser = argparse.ArgumentParser(description="Create and manipulate a PCA decomposition of the synthetic spectral library.")
 parser.add_argument("--create", action="store_true", help="Create a PCA decomposition.")
@@ -26,21 +44,11 @@ parser.add_argument("--optimize", choices=["fmin", "emcee"], help="Optimize the 
 parser.add_argument("--resume", action="store_true", help="Designed to be used with the --optimize flag to continue from the previous set of parameters. If this is left off, the chain will start from your initial guess specified in config.yaml.")
 
 parser.add_argument("--samples", type=int, default=100, help="Number of samples to run the emcee ensemble sampler.")
+parser.add_argument("--incremental_save", type=int, default=5, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--params", choices=["fmin", "emcee"], help="Which optimized parameters to use.")
 
 parser.add_argument("--store", action="store_true", help="Store the optimized emulator parameters to the HDF5 file. Use with the --params=fmin or --params=emcee to choose.")
 args = parser.parse_args()
-
-import matplotlib.pyplot as plt
-import multiprocessing as mp
-import numpy as np
-import itertools
-import Starfish
-from Starfish import emulator
-from Starfish.grid_tools import HDF5Interface
-from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator
-from Starfish.covariance import Sigma
-import os
 
 
 ### output path setups - ZJ Zhang
@@ -243,11 +251,28 @@ if args.optimize == "emcee":
     sampler = emcee.EnsembleSampler(nwalkers, ndim, lnprob, threads=mp.cpu_count())
 
     # actual run without burn-in at this stage
-    pos, prob, state = sampler.run_mcmc(p0, args.samples)
+    print("- training the spectral emulator...")
+    #pos, prob, state = sampler.run_mcmc(p0, args.samples)
 
+    # incremental save
+    nsteps = args.samples
+    ninc = args.incremental_save
+    for i, (pos, prob, state) in enumerate(sampler.sample(p0, iterations=nsteps)):
+        if (i+1) % ninc == 0:
+            # progress bar:
+            time.ctime()
+            t_out = time.strftime('%Y %b %d,%l:%M %p')
+            print("{0}: {1:}/{2:} = {3:.1f}%".format(t_out, i+1, nsteps, 100 * float(i) / nsteps))
+            # incremental save:
+            np.save(emulator_outdir+"temp_walkers_emcee.npy", pos)
+            if args.resume:
+                prev_chain = np.load(emulator_outdir+"eparams_emcee.npy")
+                new_chain_inc = np.hstack((prev_chain, sampler.chain))
+                np.save(emulator_outdir+"temp_eparms_emcee.npy", new_chain_inc)
+            else:
+                np.save(emulator_outdir+"temp_eparms_emcee.npy", sampler.chain)
     # Save the last position of the walkers
     np.save(emulator_outdir+"walkers_emcee.npy", pos)
-
     # Save the emcee chain
     if args.resume:
         prev_chain = np.load(emulator_outdir+"eparams_emcee.npy")
