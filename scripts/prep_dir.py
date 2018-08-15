@@ -46,6 +46,7 @@ find_dir(main_path + 'workplace/output/emulator/')
 find_dir(main_path + 'workplace/output/star_debug/')
 find_dir(main_path + 'workplace/output/star_inference/')
 find_dir(main_path + 'workplace/results/')
+find_dir(main_path + 'workplace/chi2fit/')
 # 3. check glocvar keyword
 if args.glocvar:
     print("...also creating workplace for glocvar...")

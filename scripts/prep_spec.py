@@ -6,7 +6,9 @@
 # Modification History:
 #
 # ZJ Zhang (Feb 24th, 2018)
-# ZJ Zhang (Apr 20th, 2018)    (ADD --- "keyword" option to enable wavecut and/or changing file names)
+# ZJ Zhang (Apr 20th, 2018)   (ADD --- "keyword" option to enable wavecut and/or changing file names)
+# ZJ Zhang (Jul 18th, 2018)   (ADD --- hack: add an upper wavelength limit in spectra @2.5um)
+# ZJ Zhang (Aug 16th, 2018)   (REVISE --- remove the upper-wavecut hack and now enable a user-defined wavelength range)
 #
 #################################################
 
@@ -30,7 +32,8 @@ parser.add_argument("--Jcal", type=float, default=None, help="flux calibration b
 parser.add_argument("--Hcal", type=float, default=None, help="flux calibration based on H-band photometry")
 parser.add_argument("--Kcal", type=float, default=None, help="flux calibration based on K-band photometry")
 parser.add_argument("--calbase", type=str, default=None, help="which band should the calibrated spectra be based on")
-parser.add_argument("--wavecut", type=float, default=None, help="any special requirement for manipulating data? [um]")
+parser.add_argument("--wavecut_low", type=float, default=None, help="wavelength cutoff - the lower boundary [um]")
+parser.add_argument("--wavecut_upp", type=float, default=None, help="wavelength cutoff - the upper boundary [um]")
 args = parser.parse_args()
 
 
@@ -46,7 +49,7 @@ cal_mag = {"J": args.Jcal,
            "K": args.Kcal}
 cal_key = list(cal_mag.keys())
 # ----
-### flux zero points (erg/cm2/s/A) of each band (from http://ssc.spitzer.caltech.edu/warmmission/propkit/pet/magtojy/ref.html)
+### flux zero points (erg/cm2/s/A) of each band (from http://ssc.spitzer.caltech.edu/warmmission/propkit/pet/magtojy/ref.html )
 flux_zp = {"J_2MASS": 3.14e-10,
            "H_2MASS": 1.11e-10,
            "K_2MASS": 4.29e-11,
@@ -178,18 +181,14 @@ def HDF5_converter(objname, outfile, wls, fls, sigmas, wavecut, u_wls='micron', 
     ### nominal mask array - all one's (no mask)
     Sf_mask = np.ones(len(Sf_wls), dtype=int)
     ### data filtering
-    # wavelength range for emulator
+    ## wavelength range for emulator
     grid_wls_range = Starfish.grid["wl_range"]
     print("...pruning spectra by removing NaN flux and out-of-range wavelengths...")
-    if wavecut is not None:
-        print("...wavelength cutoff for lambda>%f um..."%(wavecut))
-        wavecut_Ang = (wavecut * u.micron).to(u.Angstrom).value
-        if (wavecut_Ang > Sf_wls[0]) and (wavecut_Ang < Sf_wls[-1]):
-            id_final = np.where( (Sf_wls > wavecut_Ang) & (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) & (np.isnan(Sf_fls)==False) )
-        else:
-            print("warning: the given wavecut is out of the wavelength range of the spectrum... note that the wavecut is in unit of um.")
-    else:
-        id_final = np.where( (Sf_wls >= grid_wls_range[0]) & (Sf_wls <= grid_wls_range[-1]) & (np.isnan(Sf_fls)==False) )
+    wavecut_Ang_range = (wavecut * u.micron).to(u.Angstrom).value
+    # final wavecut is decided by combining the user-defined range and the boundary of the Starfish grid
+    final_wavecut = [np.nanmax([grid_wls_range[0], wavecut_Ang_range[0]]), np.nanmin([grid_wls_range[1], wavecut_Ang_range[1]])]
+    print("...wavelength cutoff for lambda in [%f, %f] Angstrom..."%(final_wavecut[0], final_wavecut[1]))
+    id_final = np.where( (Sf_wls > final_wavecut[0]) & (Sf_wls < final_wavecut[1]) & (np.isnan(Sf_fls)==False) )
     ### save to HDF5
     hdf5_load = h5py.File(outfile, 'w')
     hdf5_load.create_dataset('wls', data=Sf_wls[id_final])
@@ -230,15 +229,10 @@ for (rel_calpath, rel_infile, rel_outfile) in zip(cal_dir, raw_spec, hdf5_spec):
         if (args.calbase is not None) and (os.path.isfile(calbase_file)):
             wls, fls, sigmas = spec_read(calbase_file)
         # convert to HDF5 file
-        HDF5_converter(object, outfile, wls, fls, sigmas, args.wavecut, u_wls=args.u_wls, u_fls=args.u_fls)
+        HDF5_converter(object, outfile, wls, fls, sigmas, wavecut=[args.wavecut_low, args.wavecut_upp], u_wls=args.u_wls, u_fls=args.u_fls)
     else:
         print("no HDF5 file created for %s."%(object))
 # --
-
-
-
-
-
 
 
 
