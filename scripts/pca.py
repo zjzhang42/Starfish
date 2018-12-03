@@ -37,16 +37,17 @@ parser.add_argument("--create", action="store_true", help="Create a PCA decompos
 parser.add_argument("--plot", choices=["reconstruct", "eigenspectra", "priors", "emcee",
                                        "emulator", "chain"], help="reconstruct: plot the original synthetic spectra vs. the PCA reconstructed spectra.\n priors: plot the chosen priors on the parameters.\n emcee: plot the triangle diagram for the result of the emcee optimization.\n emulator: plot weight interpolations.\n chain: plot the chain values as a function of sampling steps.")
 
-parser.add_argument("--f_burnin", type=float, default=None, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
+parser.add_argument("--f_burnin", type=float, default=0.5, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
 
 parser.add_argument("--optimize", choices=["fmin", "emcee"], help="Optimize the emulator using either a downhill simplex algorithm or the emcee ensemble sampler algorithm.")
 
 parser.add_argument("--resume", action="store_true", help="Designed to be used with the --optimize flag to continue from the previous set of parameters. If this is left off, the chain will start from your initial guess specified in config.yaml.")
 
 parser.add_argument("--samples", type=int, default=100, help="Number of samples to run the emcee ensemble sampler.")
-parser.add_argument("--incremental_save", type=int, default=5, help="How often to save incremental progress of MCMC samples.")
+parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--params", choices=["fmin", "emcee"], help="Which optimized parameters to use.")
 
+parser.add_argument("--check", action="store_true", help="Check the emulator training results by comparing the true grid models with the model spectra on the model grids points using the trained spectral emulator.")
 parser.add_argument("--store", action="store_true", help="Store the optimized emulator parameters to the HDF5 file. Use with the --params=fmin or --params=emcee to choose.")
 args = parser.parse_args()
 
@@ -262,15 +263,15 @@ if args.optimize == "emcee":
             # progress bar:
             time.ctime()
             t_out = time.strftime('%Y %b %d,%l:%M %p')
-            print("{0}: {1:}/{2:} = {3:.1f}%".format(t_out, i+1, nsteps, 100 * float(i) / nsteps))
+            print("{0}: {1:}/{2:} = {3:.3f}%".format(t_out, i+1, nsteps, 100 * float(i) / nsteps))
             # incremental save:
             np.save(emulator_outdir+"temp_walkers_emcee.npy", pos)
             if args.resume:
                 prev_chain = np.load(emulator_outdir+"eparams_emcee.npy")
                 new_chain_inc = np.hstack((prev_chain, sampler.chain))
-                np.save(emulator_outdir+"temp_eparms_emcee.npy", new_chain_inc)
+                np.save(emulator_outdir+"temp_eparams_emcee.npy", new_chain_inc)
             else:
-                np.save(emulator_outdir+"temp_eparms_emcee.npy", sampler.chain)
+                np.save(emulator_outdir+"temp_eparams_emcee.npy", sampler.chain)
     # Save the last position of the walkers
     np.save(emulator_outdir+"walkers_emcee.npy", pos)
     # Save the emcee chain

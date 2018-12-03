@@ -5,7 +5,7 @@
 # M. Gully (2015-2017)
 # ZJ Zhang (Jul 20th, 2017)   (REVISE --- "class SPEX_PRZ(Instrument)")
 # ZJ Zhang (Jan 27th, 2018)   (REVISE --- combine "MarleyInterface" and "MarleyMay2017Interface" to the single one)
-# ZJ Zhang (Aug 15th, 2018)   (ADD --- "MarleyMsup05GridInterface"
+# ZJ Zhang (Aug 15th, 2018)   (ADD --- "MarleyMp0d5GridInterface"
 #
 #################################################
 

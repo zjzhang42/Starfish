@@ -8,7 +8,7 @@
 # ZJ Zhang (Feb 24th, 2018)
 # ZJ Zhang (Apr 20th, 2018)   (ADD --- "keyword" option to enable wavecut and/or changing file names)
 # ZJ Zhang (Jul 18th, 2018)   (ADD --- hack: add an upper wavelength limit in spectra @2.5um)
-# ZJ Zhang (Aug 16th, 2018)   (REVISE --- remove the upper-wavecut hack and now enable a user-defined wavelength range)
+# ZJ Zhang (Aug 15th, 2018)   (REVISE --- remove the upper-wavecut hack and now enable a user-defined wavelength range)
 #
 #################################################
 

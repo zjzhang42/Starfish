@@ -28,7 +28,7 @@ import time
 # import Starfish packages
 import Starfish
 import Starfish.constants as C
-from Starfish.model_glocvar_BD import ThetaParam, PhiParam
+from Starfish.model_BD import ThetaParam, PhiParam
 
 import argparse
 parser = argparse.ArgumentParser(prog="star_glocvar_MarleyMod.py", description="Run Starfish fitting model in single order mode with many walkers.")
@@ -40,8 +40,7 @@ args = parser.parse_args()
 
 ### output path setups - ZJ Zhang
 ## output files
-emulator_outdir = os.path.expandvars(Starfish.config["outdir"]) + "emulator/"
-star_glocvar_outdir = os.path.expandvars(Starfish.config["outdir"]) + "glocvar/"
+star_glocvar_outdir = os.path.expandvars(Starfish.config["glocvar_outdir"]) + "star_inference/"
 ###################################
 
 
@@ -162,7 +161,7 @@ def lnprior(p):
         return 0
 # Try to load a user-defined prior
 try:
-    sourcepath_env = Starfish.config['Theta_priors']
+    sourcepath_env = Starfish.config['glocvar_Theta_priors']
     sourcepath = os.path.expandvars(sourcepath_env)
     with open(sourcepath, 'r') as f:
         sourcecode = f.read()
@@ -198,7 +197,7 @@ ndim = len(p0)
 nwalkers = 4 * ndim
 
 if args.resume:
-    p0_ball = np.load(star_outdir+"emcee_chain.npy")[:,-1,:]
+    p0_ball = np.load(star_glocvar_outdir+"emcee_chain.npy")[:,-1,:]
 else:
     p0_ball = emcee.utils.sample_ball(p0, p0_std, size=nwalkers)
 
@@ -224,3 +223,4 @@ else:
     np.save(star_glocvar_outdir+'emcee_chain.npy',sampler.chain)
 
 print("The end.")
+

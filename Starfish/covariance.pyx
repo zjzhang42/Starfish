@@ -228,7 +228,7 @@ def make_k_func(par):
             for row in regions:
                 a = 10**row[0]
                 mu = row[1]
-                sigma = 10**row[2]
+                sigma = row[2]
 
                 rx0 = C.c_kms / mu * math.fabs(wl0 - mu)
                 rx1 = C.c_kms / mu * math.fabs(wl1 - mu)
@@ -268,7 +268,7 @@ def make_k_func_region(phi):
             a = 10**row[0]
             # print("a", a)
             mu = row[1]
-            sigma = 10**row[2]
+            sigma = row[2]
 
             rx0 = C.c_kms / mu * math.fabs(wl0 - mu)
             rx1 = C.c_kms / mu * math.fabs(wl1 - mu)

@@ -32,7 +32,7 @@ import json
 
 # import Starfish packages
 import Starfish
-from Starfish.model_glocvar_BD import ThetaParam, PhiParam
+from Starfish.model_BD import ThetaParam, PhiParam
 import Starfish.grid_tools
 from Starfish.spectrum import DataSpectrum, Mask, ChebyshevSpectrum
 from Starfish.emulator import Emulator
@@ -44,9 +44,9 @@ from Starfish.samplers import StateSampler
 
 ### output path setups - ZJ Zhang
 ## debug files
-debug_outdir = os.path.expandvars(Starfish.config["outdir"]) + "star_debug/"
+debug_outdir = os.path.expandvars(Starfish.config["glocvar_outdir"]) + "star_debug/"
 ## output files
-star_outdir = os.path.expandvars(Starfish.config["outdir"]) + "star_inference/"
+star_glocvar_outdir = os.path.expandvars(Starfish.config["glocvar_outdir"]) + "star_inference/"
 ###################################
 
 
@@ -63,7 +63,7 @@ spectra_keys = np.arange(len(DataSpectra))
 Instruments = [eval("Starfish.grid_tools." + inst)() for inst in Starfish.data["instruments"]]
 
 # Set up the logger
-logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s", filename=star_outdir+"{}log.log".format(
+logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s", filename=star_glocvar_outdir+"{}log.log".format(
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
 
 class Order:
@@ -341,48 +341,6 @@ class SampleThetaPhi(Order):
         fname = Starfish.specfmt.format(self.spectrum_id, self.order) + "phi.json"
         phi = PhiParam.load(fname)
 
-        # Set the regions to None, since we don't want to include them even if they
-        # are there
-        phi.regions = None
-
-        #Loading file that was previously output
-        # Convert PhiParam object to an array
-        self.p0 = phi.toarray()
-
-        jump = Starfish.config["Phi_jump"]
-        cheb_len = (self.npoly - 1) if self.chebyshevSpectrum.fix_c0 else self.npoly
-        cov_arr = np.concatenate((Starfish.config["cheb_jump"]**2 * np.ones((cheb_len,)), np.array([jump["sigAmp"], jump["logAmp"], jump["l"]])**2 ))
-        cov = np.diag(cov_arr)
-
-        def lnfunc(p):
-            # Convert p array into a PhiParam object
-            ind = self.npoly
-            if self.chebyshevSpectrum.fix_c0:
-                ind -= 1
-
-            cheb = p[0:ind]
-            sigAmp = p[ind]
-            ind+=1
-            logAmp = p[ind]
-            ind+=1
-            l = p[ind]
-
-            par = PhiParam(self.spectrum_id, self.order, self.chebyshevSpectrum.fix_c0, cheb, sigAmp, logAmp, l)
-
-            self.update_Phi(par)
-
-            # sigAmp must be positive (this is effectively a prior)
-            # See https://github.com/iancze/Starfish/issues/26
-            if not (0.0 < sigAmp): 
-                self.lnprob_last = self.lnprob
-                lnp = -np.inf
-                self.logger.debug("sigAmp was negative, returning -np.inf")
-                self.lnprob = lnp # Same behavior as self.evaluate()
-            else:
-                lnp = self.evaluate()
-                self.logger.debug("Evaluated Phi parameters: {} {}".format(par, lnp))
-            return lnp
-
 
     def update_Phi(self, p):
         self.logger.debug("Updating nuisance parameters to {}".format(p))
@@ -400,7 +358,7 @@ class SampleThetaPhi(Order):
         k_func = make_k_func(p)
 
         # Store the previous data matrix in case we want to revert later
-        self.data_mat_last = self.data_mat
+        self.data_mat_last = self.data_mat.copy()
         self.data_mat = get_dense_C(self.wl, k_func=k_func, max_r=max_r) + p.sigAmp*self.sigma_mat
 # ----
 
@@ -410,51 +368,9 @@ class SampleThetaPhiLines(Order):
     def initialize(self, key):
         # Run through the standard initialization
         super().initialize(key)
-
         # for now, start with white noise
         self.data_mat = self.sigma_mat.copy()
         self.data_mat_last = self.data_mat.copy()
-
-        #Set up p0 and the independent sampler
-        fname = Starfish.specfmt.format(self.spectrum_id, self.order) + "phi.json"
-        phi = PhiParam.load(fname)
-
-        # Get the regions matrix
-        region_func = make_k_func_region(phi)  # create a covariance value for a given pair of wavelengths based on the designated local variance(s)
-        max_r = 4.0 * np.max(phi.regions, axis=0)[2]  # covariance goes to 0 out of such a radius
-        self.region_mat = get_dense_C(self.wl, k_func=region_func, max_r=max_r)
-
-        # Then set phi to None
-        phi.regions = None
-
-        #Loading file that was previously output
-        # Convert PhiParam object to an array
-        self.p0 = phi.toarray()
-
-        jump = Starfish.config["Phi_jump"]
-        cheb_len = (self.npoly - 1) if self.chebyshevSpectrum.fix_c0 else self.npoly
-        cov_arr = np.concatenate((Starfish.config["cheb_jump"]**2 * np.ones((cheb_len,)), np.array([jump["sigAmp"], jump["logAmp"], jump["l"]])**2 ))
-        cov = np.diag(cov_arr)
-
-        def lnfunc(p):
-            # Convert p array into a PhiParam object
-            ind = self.npoly
-            if self.chebyshevSpectrum.fix_c0:
-                ind -= 1
-
-            cheb = p[0:ind]
-            sigAmp = p[ind]
-            ind+=1
-            logAmp = p[ind]
-            ind+=1
-            l = p[ind]
-
-            phi = PhiParam(self.spectrum_id, self.order, self.chebyshevSpectrum.fix_c0, cheb, sigAmp, logAmp, l)
-
-            self.update_Phi(phi)
-            lnp = self.evaluate()
-            self.logger.debug("Evaluated Phi parameters: {} {}".format(phi, lnp))
-            return lnp
 
 
     def update_Phi(self, phi):
@@ -467,13 +383,17 @@ class SampleThetaPhiLines(Order):
         if phi.sigAmp < 0.1:
             raise C.ModelError("sigAmp shouldn't be lower than 0.1, something is wrong.")
 
+        # Global covariance matrix
+        k_func = make_k_func(phi)
         max_r = 6.0 * phi.l # [km/s]
 
-        # Create a partial function which returns the proper element.
-        k_func = make_k_func(phi)
+        # Local covariance matrix
+        region_func = make_k_func_region(phi) # create a covariance value for a given pair of wavelengths based on the designated local variance(s)
+        max_r_region = 4 * (np.max(phi.regions, axis=0)[2]) # [km/s]
+        self.region_mat = get_dense_C(self.wl, k_func=region_func, max_r=max_r_region)
 
         # Store the previous data matrix in case we want to revert later
-        self.data_mat_last = self.data_mat
+        self.data_mat_last = self.data_mat.copy()
         self.data_mat = get_dense_C(self.wl, k_func=k_func, max_r=max_r) + phi.sigAmp*self.sigma_mat + self.region_mat
 # ----
 

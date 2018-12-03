@@ -230,7 +230,7 @@ class Order:
         print('{:-^60}'.format('-'))
 
 
-    def drawmod_fls_covmat(self):
+    def drawmod_fls_covmat(self, CC_flag=True):
         ''' Return the model flux and covariance matrix
             '''
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
@@ -240,7 +240,10 @@ class Order:
         part1 = X.dot(self.C_GP.dot(X.T))
         part2 = self.data_mat
         CC = part2 #+ part2
-        return mod_fls, CC
+        if CC_flag:
+            return mod_fls, CC
+        else:
+            return mod_fls
 
 
     def update_Theta(self, p):

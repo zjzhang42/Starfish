@@ -56,8 +56,8 @@ args = parser.parse_args()
 
 ### default plotting labels
 labels = [r'$T_{\mathrm{eff}}$', r'$\log{g}$',r'$v_z$', r'$v\sin{i}$', r'$\log{\Omega}$',
-          r'$c^1$', r'$c^2$', r'$c^3$', r'sigAmp', r'logAmp', r'$l$']
-print_labels = ['Teff', 'log-g', 'vz', 'vsini', 'logOmega', 'c1', 'c2', 'c3', 'sigAmp', 'logAmp', 'l']
+          r'$c^1$', r'$c^2$', r'$c^3$', r'sigAmp', r'logAmp', r'$l$', r'$logAmp_G$', r'$\mu_G$', r'$\sigma_G$']
+print_labels = ['Teff', 'log-g', 'vz', 'vsini', 'logOmega', 'c1', 'c2', 'c3', 'sigAmp', 'logAmp', 'l', 'logAmp_G', 'mu_G', 'sigma_G']
 default_sn_spl_id = 5  # stellar parameters for <5 and nuisance for >=5 in the final chain
 # --
 
@@ -98,7 +98,7 @@ def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi
     axes[ndim-1].set_xlabel("step number")
     figure.suptitle(object, fontsize=20)
     # save plot
-    chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_chain.%s"%(format))
+    chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_glocvar_chain.%s"%(format))
     figure.savefig(chain_figure_path, format=format, dpi=dpi)
     print("chain plot finished!")
 # ----
@@ -112,13 +112,13 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
     star_fig = corner.corner(flatchain[:, 0:default_sn_spl_id], labels=labels[:default_sn_spl_id], show_titles=True)
     star_fig.suptitle(object, fontsize=20)
     # save plot
-    star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_stellar_corner.%s"%(format))
+    star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_glocvar_stellar_corner.%s"%(format))
     star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
     ### 3. corner for nuisance parameters:
     nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True)
     nuisance_fig.suptitle(object, fontsize=20)
     # save plot
-    nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_nuisance_corner.%s"%(format))
+    nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_glocvar_nuisance_corner.%s"%(format))
     nuisance_fig.savefig(nuisance_corner_figure_path, format=format, dpi=dpi)
     print("corner plot finished!")
 # ----
@@ -135,6 +135,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     ### 0. spectrum id and order key
     spectrum_id = 0
     order_key = 0
+    fix_c0 = True
     ### 1. obtain the best-fit parameters
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     star_pars = np.median(flatchain, axis=0)
@@ -153,17 +154,30 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     nuis_sigAmp = final_param[:, 8]
     nuis_logAmp = final_param[:, 9]
     nuis_l = final_param[:, 10]
+    region_logAmp = final_param[:, 11]
+    region_mu = final_param[:, 12]
+    region_sigma = final_param[:, 13]
     # claim the fitting results
     print("Fitting results -")
     for item_index in range(0, len(star_pars)):
         print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"
               %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
-    star_model = SampleThetaPhi(debug=True)
+    star_model = SampleThetaPhiLines(debug=True)
     star_model.initialize((0, 0))
-    bestfit_theta = ThetaParam(grid=star_pars[0:2], vz=star_pars[2], vsini=star_pars[3], logOmega=star_pars[4])
+    bestfit_theta = ThetaParam(grid=star_pars[0:2],
+                               vz=star_pars[2],
+                               vsini=star_pars[3],
+                               logOmega=star_pars[4])
     star_model.update_Theta(bestfit_theta)
-    bestfit_phi = PhiParam(0, 0, True, star_pars[5:8], star_pars[8], star_pars[9], star_pars[10])
+    bestfit_phi = PhiParam(spectrum_id=spectrum_id,
+                           order=order_key,
+                           fix_c0=fix_c0,
+                           cheb=star_pars[5:8],
+                           sigAmp=star_pars[8],
+                           logAmp=star_pars[9],
+                           l=star_pars[10],
+                           regions=star_pars[11:].reshape((-1,3)))
     star_model.update_Phi(bestfit_phi)
     mod_fls, mod_Covmat = star_model.drawmod_fls_covmat()
     ### 3. obtain the observed spectrum
@@ -210,6 +224,9 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     resfile_load.create_dataset('nuis_sigAmp', data=nuis_sigAmp)
     resfile_load.create_dataset('nuis_logAmp', data=nuis_logAmp)
     resfile_load.create_dataset('nuis_l', data=nuis_l)
+    resfile_load.create_dataset('region_logAmp', data=region_logAmp)
+    resfile_load.create_dataset('region_mu', data=region_mu)
+    resfile_load.create_dataset('region_sigma', data=region_sigma)
     resfile_load.create_dataset('mod_Covmat', data=mod_Covmat)
     # save
     resfile_load.close()
@@ -303,12 +320,12 @@ else:
     else:
         print("warning: mode should be either 'std' or 'usr'. assuming the 'std' mode anyway...")
     object = Starfish.config["name"]
-    outdir = Starfish.config["outdir"]
-    plotdir = Starfish.config["plotdir"]
-    resdir = Starfish.config["resdir"]["path"]
-    resfile = resdir + "glocvar/" + Starfish.config["resdir"]["resfile"]
-    specfile = resdir + "glocvar/" + Starfish.config["resdir"]["specfile"]
-    chain_file = os.path.expandvars(outdir + "glocvar/" + "emcee_chain.npy")
+    outdir = Starfish.config["glocvar_outdir"]
+    plotdir = Starfish.config["glocvar_plotdir"]
+    resdir = Starfish.config["glocvar_resdir"]["path"]
+    resfile = resdir + Starfish.config["resdir"]["resfile"]
+    specfile = resdir + Starfish.config["resdir"]["specfile"]
+    chain_file = os.path.expandvars(outdir + "star_inference/emcee_chain.npy")
 
 ## check the output chain file
 if os.path.isfile(chain_file)==False:
