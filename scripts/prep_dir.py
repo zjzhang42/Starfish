@@ -6,7 +6,7 @@
 # Modification History:
 #
 # ZJ Zhang (Apr 17th, 2018)
-# ZJ Zhang (Dec 2nd, 2018) (ADD directories for "autocorr_wavelength/")
+# ZJ Zhang (Dec 2nd, 2018) (ADD directories for "wave_autocorr/")
 #
 #################################################
 
@@ -42,12 +42,11 @@ find_dir(main_path + 'workplace/plots/pca/')
 find_dir(main_path + 'workplace/plots/emulator/')
 find_dir(main_path + 'workplace/plots/star_debug/')
 find_dir(main_path + 'workplace/plots/star_inference/')
-find_dir(main_path + 'workplace/plots/autocorr_wavelength/')
+find_dir(main_path + 'workplace/plots/star_glob_autocorr/')
 find_dir(main_path + 'workplace/output/')
 find_dir(main_path + 'workplace/output/emulator/')
 find_dir(main_path + 'workplace/output/star_debug/')
 find_dir(main_path + 'workplace/output/star_inference/')
-find_dir(main_path + 'workplace/output/autocorr_wavelength/')
 find_dir(main_path + 'workplace/results/')
 find_dir(main_path + 'workplace/chi2fit/')
 # 3. check glocvar keyword

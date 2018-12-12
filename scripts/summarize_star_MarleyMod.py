@@ -6,6 +6,7 @@
 # Modification History:
 #
 # ZJ Zhang (Apr 24th, 2018)
+# ZJ Zhang (Dec 2nd, 2018) (ADD the "glob_Covmat" parameter in the final resfile via "store_star_MarleyMod")
 #
 #################################################
 
@@ -189,11 +190,14 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     noise_1s_low, noise_1s_upp = sigma_envelope(drawn_fls, num_sigma=1)
     noise_2s_low, noise_2s_upp = sigma_envelope(drawn_fls, num_sigma=2)
     noise_3s_low, noise_3s_upp = sigma_envelope(drawn_fls, num_sigma=3)
-    ### 5. save into a HDF5 resfile (results file)
+    ### 5. extract the global covariance matrix (based on SampleThetaPhi.update_Phi)
+    glob_Covmat = mod_Covmat - star_pars[8] * obs_sigmas**2 * np.eye(len(obs_wls))
+    ### 6. save into a HDF5 resfile (results file)
     resfile_load = h5py.File(os.path.expandvars(resfile), "w")
     # spec id & orders
     resfile_load.create_dataset('spectrum_id', data=spectrum_id)
     resfile_load.create_dataset('order', data=order_key)
+    resfile_load.create_dataset('fix_c0', data=int(fix_c0))
     # observed spectra
     resfile_load.create_dataset('obs_wls', data=obs_wls)
     resfile_load.create_dataset('obs_fls', data=obs_fls)
@@ -221,6 +225,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     resfile_load.create_dataset('nuis_logAmp', data=nuis_logAmp)
     resfile_load.create_dataset('nuis_l', data=nuis_l)
     resfile_load.create_dataset('mod_Covmat', data=mod_Covmat)
+    resfile_load.create_dataset('glob_Covmat', data=glob_Covmat)
     # save
     resfile_load.close()
     ### 6. additionally save spectra into a csv file
@@ -241,7 +246,6 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
 
 
 
-
 def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
     ''' compare the observed and model spectra by reading the resfile'''
     ### 1. check if resfile exists
@@ -249,17 +253,18 @@ def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
         print("error: resfile not found - %s\n- please run '--store' first."%(resfile))
     else:
         ### 2. read fitting results
-        resfile_read = h5py.File(os.path.expandvars(resfile), "r")
-        obs_wls = resfile_read['obs_wls'].value
-        obs_fls = resfile_read['obs_fls'].value
-        mod_fls = resfile_read['mod_fls'].value
-        resid_fls = resfile_read['resid_fls'].value
-        noise_1s_upp = resfile_read['noise_1s_upp'].value
-        noise_1s_low = resfile_read['noise_1s_low'].value
-        noise_2s_upp = resfile_read['noise_2s_upp'].value
-        noise_2s_low = resfile_read['noise_2s_low'].value
-        noise_3s_upp = resfile_read['noise_3s_upp'].value
-        noise_3s_low = resfile_read['noise_3s_low'].value
+        resfile_load = h5py.File(os.path.expandvars(resfile), "r")
+        obs_wls = resfile_load['obs_wls'].value
+        obs_fls = resfile_load['obs_fls'].value
+        mod_fls = resfile_load['mod_fls'].value
+        resid_fls = resfile_load['resid_fls'].value
+        noise_1s_upp = resfile_load['noise_1s_upp'].value
+        noise_1s_low = resfile_load['noise_1s_low'].value
+        noise_2s_upp = resfile_load['noise_2s_upp'].value
+        noise_2s_low = resfile_load['noise_2s_low'].value
+        noise_3s_upp = resfile_load['noise_3s_upp'].value
+        noise_3s_low = resfile_load['noise_3s_low'].value
+        resfile_load.close()
         ### 3. define plotting y-axis range
         id_xrange = np.where((obs_wls >= wls_range[0]) & (obs_wls <= wls_range[-1]))
         comp_spec_min = y_scalar * np.min([ 0, np.nanmin(obs_fls[id_xrange]), np.nanmin(mod_fls[id_xrange]) ])
