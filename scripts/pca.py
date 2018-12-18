@@ -6,8 +6,9 @@
 # Modification History:
 #
 # M. Gully (2015-2017)
-# ZJ Zhang (Jul. 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
-# ZJ Zhang (Feb. 23th, 2018)   [REVISE --- replace the burn-in phase by adding a user-defined burn-in fraction "f_burnin"; the "resume" keyword will concatenate the output chains automatically]
+# ZJ Zhang (Jul 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
+# ZJ Zhang (Feb 23th, 2018)   [REVISE --- replace the burn-in phase by adding a user-defined burn-in fraction "f_burnin"; the "resume" keyword will concatenate the output chains automatically]
+# ZJ Zhang (Dec 15th, 2018)   [REVISE --- let the "args.plot == "chain":" part automatcially extract the number of grid parameters]
 #
 #################################################
 
@@ -290,12 +291,17 @@ if args.plot == "chain":
     chain = np.load(emulator_outdir+"eparams_emcee.npy")
     nwalkers, nsamples, ndim = chain.shape
     print("Emulator training chains: %d walkers, %d samples, %d parameters"%(nwalkers, nsamples, ndim))
+    ### extract the number of grid parameters
+    my_pca = PCAGrid.open()
+    num_grid_par = int((ndim - 1)/my_pca.m)  # 3 if the grid is [temp, logg], 4 if the grid is [temp, logg, Z]
     ### plotting
     figure, axes = plt.subplots(ndim, 1, sharex=True, figsize=(8, 14))
     # labels
     label = [r"$\lambda_{\xi}$"]
-    for i_eigen in range(0,int((ndim-1)/3)):
+    for i_eigen in range(0,int((ndim-1)/num_grid_par)):
         label = label + [r"Amp_%d"%(i_eigen), r"l_Temp_%d"%(i_eigen), r"l_logg_%d"%(i_eigen)]
+        if num_grid_par==4:
+            label = label + [r"l_Z_%d"%(i_eigen)]
     # plot
     for i in range(0, ndim):
         axes[i].plot(chain[:, :, i].T, color="k", alpha=0.2)
