@@ -6,6 +6,7 @@
 # Modification History:
 #
 # ZJ Zhang (Apr. 24th, 2018)
+# ZJ Zhang (Apr. 02nd, 2019)   (UPDATE --- add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
 #
 #################################################
 
@@ -35,6 +36,7 @@ parser = argparse.ArgumentParser(prog="star_MarleyMod.py", description="Run Star
 parser.add_argument("--samples", type=int, default=5, help="How many samples to run?")
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
+parser.add_argument("--emucov", action="store_true", help="Include the spectral emulator covariance matrix in the fitting process (default: False)")
 args = parser.parse_args()
 
 
@@ -101,7 +103,7 @@ phi_par.save()
 
 
 # 2. Run the program.
-model = SampleThetaPhi(debug=True)
+model = SampleThetaPhi(debug=True, emucov=args.emucov)
 model.initialize((spectrum_id, order_key))
 
 

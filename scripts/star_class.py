@@ -6,6 +6,8 @@
 # Modification History:
 #
 # ZJ Zhang (Apr. 24th, 2018)
+# ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
+# ZJ Zhang (Apr. 02nd, 2019)   (UPDATE --- add the boolean keyword "emucov" to the class "Order" to say if the spectral emulator covariance matrix should be turned on or turned off)
 #
 #################################################
 
@@ -66,7 +68,7 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
 
 class Order:
-    def __init__(self, debug=False):
+    def __init__(self, debug=False, emucov=True):
         '''
         This object contains all of the variables necessary for the partial
         lnprob calculation for one echelle order. It is designed to first be
@@ -79,6 +81,9 @@ class Order:
         self.lnprob_last = -np.inf
 
         self.debug = debug
+        self.emucov = emucov
+        if self.emucov:
+            print("spectral emulator covariance matrix being incorporated...")
 
     def initialize(self, key):
         '''
@@ -168,7 +173,7 @@ class Order:
 
         part1 = X.dot(self.C_GP.dot(X.T))
         part2 = self.data_mat
-        CC = part2 #+ part2
+        CC = part1 + part2 if self.emucov else part2
 
         try:
             factor, flag = cho_factor(CC)
@@ -239,9 +244,10 @@ class Order:
         # covariance matrix
         part1 = X.dot(self.C_GP.dot(X.T))
         part2 = self.data_mat
-        CC = part2 #+ part2
+        CC = part1 + part2 if self.emucov else part2
+        part1 = np.nan * part1 if self.emucov else part2
         if CC_flag:
-            return mod_fls, CC
+            return mod_fls, CC, part1, part2
         else:
             return mod_fls
 

@@ -6,7 +6,10 @@
 # Modification History:
 #
 # ZJ Zhang (Apr 24th, 2018)
-# ZJ Zhang (Dec 2nd, 2018) (ADD the "glob_Covmat" parameter in the final resfile via "store_star_MarleyMod")
+# ZJ Zhang (Dec 02nd, 2018) (add the "glob_Covmat" parameter in the final resfile via "store_star_MarleyMod")
+# ZJ Zhang (Mar 14th, 2019) (turn on the spectral emulator matrix into the entire covariance matrix)
+# ZJ Zhang (Apr 02nd, 2019) (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (Apr 07th, 2019) (allow the program to show long object names in pieces)
 #
 #################################################
 
@@ -33,6 +36,7 @@ from Starfish.utils import random_draws, sigma_envelope
 import argparse
 parser = argparse.ArgumentParser(prog="summarize_star_MarleyMod.py", description="summarize the fitting results from star_MarleyMod.py, including observed spectra (wls + fls), best-fit parameters with uncertainties, best-fit model flux, and covariance matrix.")
 parser.add_argument("--mode", type=str, default='std', help="mode of running this program, including the standard mode ('std') and user-input mode ('usr'); under the 'usr' mode, the input chain files and output files are defined by the user")
+parser.add_argument("--emucov", action="store_true", help="Include the spectral emulator covariance matrix in the fitting process (default: False)")
 parser.add_argument("--f_burnin", type=float, default=0.5, help="burn-in fraction of the emcee chains.")
 parser.add_argument("--chain", action="store_true", help="plot the chain values as a function of sampling steps.")
 parser.add_argument("--corner", action="store_true", help="plot the corner plots for the chains with the given f_burnin.")
@@ -67,6 +71,38 @@ wls_range = [9000, 18000]
 y_scalar = 1.2
 # --
 
+def show_object_str(object_str):
+    ''' show long object names into pieces, separated by "\n" 
+        
+        the naming system of the fitting results for each object is:
+        @object_name@_
+            @Model_name@_
+                @interpolator@_
+                    @interpolator_short_name@_
+                        emucov@emucov@_
+                            globcov@globcov@_
+                                loccov@loccov@_
+                                    @starprior_name@_
+                                        @keyword@
+
+        here I will show the name into pieces as:
+        > @object_name@_@Model_name@_
+        > @interpolator@_@interpolator_short_name@_
+        > emucov@emucov@_globcov@globcov@_loccov@loccov@_
+        > @starprior_name@_@keyword@
+        '''
+    ### 1. find all positions of "_"
+    pos_ = [index for index, char in enumerate(object_str) if char == "_"]
+    if len(pos_)!=8:
+        print("error: there are not 8 \"_\" detected in the input string... Please check the naming system of the folders/files...")
+        print("\n- the up-to-date naming system is: \n    @object_name@ _ @Model_name@ _ @interpolator@ _ @interpolator_short_name@ _ emucov@emucov@ _ globcov@globcov@ _ loccov@loccov@ _ @starprior_name@ _ @keyword@")
+        return False
+    else:
+        ### 2. add "\n" into the string
+        return object_str[ : pos_[1]+1] + "\n" + object_str[pos_[1]+1 : pos_[3]+1] + "\n" + object_str[pos_[3]+1 : pos_[6]+1] + "\n" + object_str[pos_[6]+1 : ]
+# ----
+
+
 def burnin_flat(chain, f_burnin=0.5):
     ''' return the flatchain for the given chain and burn-in fraction'''
     ### chain shape
@@ -97,7 +133,7 @@ def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi
         axes[i].set_ylabel(labels[i])
         axes[i].axvline(int(nsamples*f_burnin), color='red', linestyle='-') # burn-in cut-off
     axes[ndim-1].set_xlabel("step number")
-    figure.suptitle(object, fontsize=20)
+    figure.suptitle(show_object_str(object), fontsize=20)
     # save plot
     chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_chain.%s"%(format))
     figure.savefig(chain_figure_path, format=format, dpi=dpi)
@@ -117,7 +153,7 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
     star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
     ### 3. corner for nuisance parameters:
     nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True)
-    nuisance_fig.suptitle(object, fontsize=20)
+    nuisance_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_nuisance_corner.%s"%(format))
     nuisance_fig.savefig(nuisance_corner_figure_path, format=format, dpi=dpi)
@@ -125,7 +161,7 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
 # ----
 
 
-def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000):
+def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000, emucov=True):
     ''' store star_MarleyMod.py parameters into HDF5 files, including:
         - observed wavelength
         - observed flux
@@ -161,7 +197,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
         print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"
               %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
-    star_model = SampleThetaPhi(debug=True)
+    star_model = SampleThetaPhi(debug=True, emucov=emucov)
     star_model.initialize((spectrum_id, order_key))
     bestfit_theta = ThetaParam(grid=star_pars[0:2],
                                vz=star_pars[2],
@@ -176,7 +212,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
                            logAmp=star_pars[9],
                            l=star_pars[10])
     star_model.update_Phi(bestfit_phi)
-    mod_fls, mod_Covmat = star_model.drawmod_fls_covmat()
+    mod_fls, mod_Covmat, emu_Covmat, sigmaglob_Covmat = star_model.drawmod_fls_covmat()
     ### 3. obtain the observed spectrum
     obs_wls = star_model.wl
     obs_fls = star_model.fl
@@ -190,8 +226,9 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     noise_1s_low, noise_1s_upp = sigma_envelope(drawn_fls, num_sigma=1)
     noise_2s_low, noise_2s_upp = sigma_envelope(drawn_fls, num_sigma=2)
     noise_3s_low, noise_3s_upp = sigma_envelope(drawn_fls, num_sigma=3)
-    ### 5. extract the global covariance matrix (based on SampleThetaPhi.update_Phi)
-    glob_Covmat = mod_Covmat - star_pars[8] * obs_sigmas**2 * np.eye(len(obs_wls))
+    ### 5. extract the sigma and global covariance matrix
+    sigma_Covmat = star_pars[8] * obs_sigmas**2 * np.eye(len(obs_wls))
+    glob_Covmat = sigmaglob_Covmat - sigma_Covmat
     ### 6. save into a HDF5 resfile (results file)
     resfile_load = h5py.File(os.path.expandvars(resfile), "w")
     # spec id & orders
@@ -226,6 +263,8 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     resfile_load.create_dataset('nuis_l', data=nuis_l)
     resfile_load.create_dataset('mod_Covmat', data=mod_Covmat)
     resfile_load.create_dataset('glob_Covmat', data=glob_Covmat)
+    resfile_load.create_dataset('emu_Covmat', data=emu_Covmat)
+    resfile_load.create_dataset('sigma_Covmat', data=sigma_Covmat)
     # save
     resfile_load.close()
     ### 6. additionally save spectra into a csv file
@@ -337,7 +376,7 @@ else:
         plot_star_corner(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format, dpi=args.dpi)
     ## 3. store results
     if args.store:
-        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd)
+        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd, emucov=args.emucov)
     ## 4. compare spectra
     if args.spec:
         comp_star_spec(object, resdir, resfile, format=args.format, dpi=args.dpi)

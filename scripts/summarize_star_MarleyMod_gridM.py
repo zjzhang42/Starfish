@@ -6,6 +6,7 @@
 # Modification History:
 #
 # ZJ Zhang (Dec 17th, 2018)
+# ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
 #
 # adapted from "summarize_star_MarleyMod.py" but can now fit a metallicity grid
 #################################################
@@ -177,7 +178,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
                            logAmp=star_pars[10],
                            l=star_pars[11])
     star_model.update_Phi(bestfit_phi)
-    mod_fls, mod_Covmat = star_model.drawmod_fls_covmat()
+    mod_fls, mod_Covmat, emu_Covmat, sigmaglob_Covmat = star_model.drawmod_fls_covmat()
     ### 3. obtain the observed spectrum
     obs_wls = star_model.wl
     obs_fls = star_model.fl
@@ -191,8 +192,9 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     noise_1s_low, noise_1s_upp = sigma_envelope(drawn_fls, num_sigma=1)
     noise_2s_low, noise_2s_upp = sigma_envelope(drawn_fls, num_sigma=2)
     noise_3s_low, noise_3s_upp = sigma_envelope(drawn_fls, num_sigma=3)
-    ### 5. extract the global covariance matrix (based on SampleThetaPhi.update_Phi)
-    glob_Covmat = mod_Covmat - star_pars[9] * obs_sigmas**2 * np.eye(len(obs_wls))
+    ### 5. extract the sigma and global covariance matrix
+    sigma_Covmat = star_pars[9] * obs_sigmas**2 * np.eye(len(obs_wls))
+    glob_Covmat = sigmaglob_Covmat - sigma_Covmat
     ### 6. save into a HDF5 resfile (results file)
     resfile_load = h5py.File(os.path.expandvars(resfile), "w")
     # spec id & orders
@@ -228,6 +230,8 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
     resfile_load.create_dataset('nuis_l', data=nuis_l)
     resfile_load.create_dataset('mod_Covmat', data=mod_Covmat)
     resfile_load.create_dataset('glob_Covmat', data=glob_Covmat)
+    resfile_load.create_dataset('emu_Covmat', data=emu_Covmat)
+    resfile_load.create_dataset('sigma_Covmat', data=sigma_Covmat)
     # save
     resfile_load.close()
     ### 6. additionally save spectra into a csv file
