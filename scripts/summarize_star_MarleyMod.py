@@ -86,7 +86,8 @@ def show_object_str(object_str):
                                         @keyword@
 
         here I will show the name into pieces as:
-        > @object_name@_@Model_name@_
+        > @object_name@_
+        > @Model_name@_
         > @interpolator@_@interpolator_short_name@_
         > emucov@emucov@_globcov@globcov@_loccov@loccov@_
         > @starprior_name@_@keyword@
@@ -99,7 +100,7 @@ def show_object_str(object_str):
         return False
     else:
         ### 2. add "\n" into the string
-        return object_str[ : pos_[1]+1] + "\n" + object_str[pos_[1]+1 : pos_[3]+1] + "\n" + object_str[pos_[3]+1 : pos_[6]+1] + "\n" + object_str[pos_[6]+1 : ]
+        return object_str[ : pos_[0]+1] + "\n" + object_str[pos_[0]+1 : pos_[1]+1] + "\n" + object_str[pos_[1]+1 : pos_[3]+1] + "\n" + object_str[pos_[3]+1 : pos_[6]+1] + "\n" + object_str[pos_[6]+1 : ]
 # ----
 
 
@@ -133,7 +134,7 @@ def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi
         axes[i].set_ylabel(labels[i])
         axes[i].axvline(int(nsamples*f_burnin), color='red', linestyle='-') # burn-in cut-off
     axes[ndim-1].set_xlabel("step number")
-    figure.suptitle(show_object_str(object), fontsize=20)
+    figure.suptitle(show_object_str(object), fontsize=15)
     # save plot
     chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_chain.%s"%(format))
     figure.savefig(chain_figure_path, format=format, dpi=dpi)
@@ -147,7 +148,7 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     ### 2. corner for stellar parameters
     star_fig = corner.corner(flatchain[:, 0:default_sn_spl_id], labels=labels[:default_sn_spl_id], show_titles=True)
-    star_fig.suptitle(object, fontsize=20)
+    star_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_stellar_corner.%s"%(format))
     star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
@@ -311,7 +312,7 @@ def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
         resid_spec_min = y_scalar * np.min([ 0, np.nanmin(resid_fls[id_xrange]), np.nanmin(noise_3s_low[id_xrange]) ])
         resid_spec_max = y_scalar * np.max([ np.nanmax(resid_fls[id_xrange]), np.nanmax(noise_3s_upp[id_xrange]) ])
         ### 3. comparison
-        figure, axes = plt.subplots(nrows=2, figsize=(10, 8), sharex=True)
+        figure, axes = plt.subplots(nrows=2, figsize=(10, 10), sharex=True)
         # observation vs. model
         axes[0].plot(obs_wls, obs_fls, color='k', linestyle='-', linewidth=2, zorder=1, label='data')
         axes[0].plot(obs_wls, mod_fls, color='r', linestyle='-', linewidth=2, zorder=2, label='model')
@@ -330,9 +331,9 @@ def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
         axes[1].set_xlim(obs_wls[0], obs_wls[-1])
         axes[1].set_ylim(resid_spec_min, resid_spec_max)
         # title
-        figure.suptitle(object, fontsize=20)
+        figure.suptitle(show_object_str(object), fontsize=20)
         # save
-        figure.subplots_adjust()
+        figure.tight_layout(rect=[0, 0.03, 1, 0.8])
         compspec_figure_path = os.path.expandvars(resdir + "%s_spec.%s"%(object, format))
         figure.savefig(compspec_figure_path, format=format, dpi=dpi)
         print("spectra comparison finished!")
