@@ -84,6 +84,8 @@ def show_object_str(object_str):
                                 loccov@loccov@_
                                     @starprior_name@_
                                         @keyword@
+        
+        - there should be 8 "_" to separate all categories, but there could be sometimes one "_" hidden inside of @Model_name@, which might make the total number of "_" as 9
 
         here I will show the name into pieces as:
         > @object_name@_
@@ -94,13 +96,17 @@ def show_object_str(object_str):
         '''
     ### 1. find all positions of "_"
     pos_ = [index for index, char in enumerate(object_str) if char == "_"]
-    if len(pos_)!=8:
-        print("error: there are not 8 \"_\" detected in the input string... Please check the naming system of the folders/files...")
+    if not ((len(pos_)==8) or (len(pos_)==9)):
+        print("error: there are not 8 or 9 \"_\" detected in the input string... Please check the naming system of the folders/files...")
         print("\n- the up-to-date naming system is: \n    @object_name@ _ @Model_name@ _ @interpolator@ _ @interpolator_short_name@ _ emucov@emucov@ _ globcov@globcov@ _ loccov@loccov@ _ @starprior_name@ _ @keyword@")
         return False
     else:
         ### 2. add "\n" into the string
-        return object_str[ : pos_[0]+1] + "\n" + object_str[pos_[0]+1 : pos_[1]+1] + "\n" + object_str[pos_[1]+1 : pos_[3]+1] + "\n" + object_str[pos_[3]+1 : pos_[6]+1] + "\n" + object_str[pos_[6]+1 : ]
+        if len(pos_)==8:
+            index_modelname_end = 1
+        elif len(pos_)==9:
+            index_modelname_end = 2
+        return object_str[ : pos_[0]+1] + "\n" + object_str[pos_[0]+1 : pos_[index_modelname_end]+1] + "\n" + object_str[pos_[index_modelname_end]+1 : pos_[index_modelname_end+2]+1] + "\n" + object_str[pos_[index_modelname_end+2]+1 : pos_[index_modelname_end+5]+1] + "\n" + object_str[pos_[index_modelname_end+5]+1 : ]
 # ----
 
 

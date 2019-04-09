@@ -14,6 +14,7 @@
 # ZJ Zhang (Mar 06th, 2019)   (ADD --- "MarleyMn0d5GridInterface")
 # ZJ Zhang (Mar 07th, 2019)   (ADD --- "MarleygridMn0d5M0Mp0d5GridInterface")
 # ZJ Zhang (Mar 29th, 2019)   (MODIFY --- class "SPEX_PRZ(Instrument)" to "SPEX_PRZp0d5(Instrument)")
+# ZJ Zhang (Apr 07th, 2019)   (change the function name from "MarleyGridInterface" to "MarleyM0GridInterface")
 #
 #################################################
 
@@ -187,13 +188,13 @@ class RawGridInterface:
 
 
 
-class MarleyGridInterface(RawGridInterface):
-    ''' An interface to the Sonoara atmospheric models by Marley et al. (2018 in prep)
+class MarleyM0GridInterface(RawGridInterface):
+    ''' An interface to the Sonoara atmospheric models by Marley et al. (2018 in prep), corresponding to solar metallicity M=0
         - originally added by Michael Gully and modified by ZJ Zhang
         '''
     def __init__(self, air=False, norm=False, wl_range=[4000, 50000], base=os.path.expandvars(Starfish.grid["raw_path"])):
         ## basic information of model grids
-        super().__init__(name="Marley",
+        super().__init__(name="MarleyM0",
                          param_names=["temp", "logg"],
                          points=[np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
                                  np.arange(3.25, 5.51, 0.25)],
@@ -453,12 +454,10 @@ class MarleyMn0d5GridInterface(RawGridInterface):
 
 
 
-class DEPRECATED_MarleygridM0Mp0d5GridInterface(RawGridInterface):
+class MarleygridM0Mp0d5pre190306GridInterface(RawGridInterface):
     '''
-        
-        [!!!DEPRECATED!!!] 
+        < NAME CHANGED FROM "MarleygridM0Mp0d5" TO "MarleygridM0Mp0d5pre190306" >
         - the model grids of Marley18_Mp0d5 has been changed since March 06th, 2019, therefore, the overlapping parameter space between the Marley18_M0 and Marley18_Mp0d5 have been updated as well
-        - need updates before using it again
 
         The Marley18 model with a metallicity grid of [Z=0, Z=+0.5]
         
@@ -469,7 +468,7 @@ class DEPRECATED_MarleygridM0Mp0d5GridInterface(RawGridInterface):
         '''
     def __init__(self, air=False, norm=False, wl_range=[4000, 50000], base=os.path.expandvars(Starfish.grid["raw_path"])):
         ## basic information of model grids
-        super().__init__(name="Marley_gridM0Mp0d5",
+        super().__init__(name="MarleygridM0Mp0d5pre190306",
                          param_names=["temp", "logg", "Z"],
                          points=[np.array([200, 225, 250, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2400]),
                                  np.arange(3.5, 5.51, 0.5),
@@ -533,7 +532,7 @@ class DEPRECATED_MarleygridM0Mp0d5GridInterface(RawGridInterface):
             model_name = "Marley18_M0"
             model_skiprows = 3
         elif parameters[-1]==0.5:
-            model_name = "Marley18_Mp0d5"
+            model_name = "Marley18_Mp0d5pre190306"
             model_skiprows = 2
         str_parameters = [model_name] + str_parameters
         # append the string for the sign of metallicity
@@ -579,7 +578,7 @@ class MarleygridMn0d5M0Mp0d5GridInterface(RawGridInterface):
         '''
     def __init__(self, air=False, norm=False, wl_range=[4000, 50000], base=os.path.expandvars(Starfish.grid["raw_path"])):
         ## basic information of model grids
-        super().__init__(name="Marley_gridM0Mp0d5",
+        super().__init__(name="MarleygridMn0d5M0Mp0d5",
                          param_names=["temp", "logg", "Z"],
                          points=[np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
                                  np.array([3.25, 3.5, 4.0, 4.5, 5.0, 5.5]),
