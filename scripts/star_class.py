@@ -245,7 +245,7 @@ class Order:
         part1 = X.dot(self.C_GP.dot(X.T))
         part2 = self.data_mat
         CC = part1 + part2 if self.emucov else part2
-        part1 = np.nan * part1 if self.emucov else part2
+        part1 = part1 if self.emucov else np.nan * part1
         if CC_flag:
             return mod_fls, CC, part1, part2
         else:

@@ -7,6 +7,8 @@
 #
 # ZJ Zhang (Dec 17th, 2018)
 # ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
+# ZJ Zhang (Apr 08th, 2019) (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (Apr 08th, 2019) (allow the program to show long object names in pieces)
 #
 # adapted from "summarize_star_MarleyMod.py" but can now fit a metallicity grid
 #################################################
@@ -34,6 +36,7 @@ from Starfish.utils import random_draws, sigma_envelope
 import argparse
 parser = argparse.ArgumentParser(prog="summarize_star_MarleyMod_gridM.py", description="summarize the fitting results from star_MarleyMod.py, including observed spectra (wls + fls), best-fit parameters with uncertainties, best-fit model flux, and covariance matrix.")
 parser.add_argument("--mode", type=str, default='std', help="mode of running this program, including the standard mode ('std') and user-input mode ('usr'); under the 'usr' mode, the input chain files and output files are defined by the user")
+parser.add_argument("--emucov", action="store_true", help="Include the spectral emulator covariance matrix in the fitting process (default: False)")
 parser.add_argument("--f_burnin", type=float, default=0.5, help="burn-in fraction of the emcee chains.")
 parser.add_argument("--chain", action="store_true", help="plot the chain values as a function of sampling steps.")
 parser.add_argument("--corner", action="store_true", help="plot the corner plots for the chains with the given f_burnin.")
@@ -68,6 +71,45 @@ wls_range = [9000, 18000]
 y_scalar = 1.2
 # --
 
+def show_object_str(object_str):
+    ''' show long object names into pieces, separated by "\n"
+
+        the naming system of the fitting results for each object is:
+        @object_name@_
+            @Model_name@_
+                @interpolator@_
+                    @interpolator_short_name@_
+                        emucov@emucov@_
+                            globcov@globcov@_
+                                loccov@loccov@_
+                                    @starprior_name@_
+                                        @keyword@
+
+        - there should be 8 "_" to separate all categories, but there could be sometimes one "_" hidden inside of @Model_name@, which might make the total number of "_" as 9
+
+        here I will show the name into pieces as:
+        > @object_name@_
+        > @Model_name@_
+        > @interpolator@_@interpolator_short_name@_
+        > emucov@emucov@_globcov@globcov@_loccov@loccov@_
+        > @starprior_name@_@keyword@
+        '''
+    ### 1. find all positions of "_"
+    pos_ = [index for index, char in enumerate(object_str) if char == "_"]
+    if not ((len(pos_)==8) or (len(pos_)==9)):
+        print("error: there are not 8 or 9 \"_\" detected in the input string... Please check the naming system of the folders/files...")
+        print("\n- the up-to-date naming system is: \n    @object_name@ _ @Model_name@ _ @interpolator@ _ @interpolator_short_name@ _ emucov@emucov@ _ globcov@globcov@ _ loccov@loccov@ _ @starprior_name@ _ @keyword@")
+        return False
+    else:
+        ### 2. add "\n" into the string
+        if len(pos_)==8:
+            index_modelname_end = 1
+        elif len(pos_)==9:
+            index_modelname_end = 2
+        return object_str[ : pos_[0]+1] + "\n" + object_str[pos_[0]+1 : pos_[index_modelname_end]+1] + "\n" + object_str[pos_[index_modelname_end]+1 : pos_[index_modelname_end+2]+1] + "\n" + object_str[pos_[index_modelname_end+2]+1 : pos_[index_modelname_end+5]+1] + "\n" + object_str[pos_[index_modelname_end+5]+1 : ]
+# ----
+
+
 def burnin_flat(chain, f_burnin=0.5):
     ''' return the flatchain for the given chain and burn-in fraction'''
     ### chain shape
@@ -98,7 +140,7 @@ def plot_star_chain(object, chain_file, plotdir, f_burnin=0.5, format='png', dpi
         axes[i].set_ylabel(labels[i])
         axes[i].axvline(int(nsamples*f_burnin), color='red', linestyle='-') # burn-in cut-off
     axes[ndim-1].set_xlabel("step number")
-    figure.suptitle(object, fontsize=20)
+    figure.suptitle(show_object_str(object), fontsize=15)
     # save plot
     chain_figure_path = os.path.expandvars(plotdir + "star_inference/star_chain.%s"%(format))
     figure.savefig(chain_figure_path, format=format, dpi=dpi)
@@ -112,13 +154,13 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     ### 2. corner for stellar parameters
     star_fig = corner.corner(flatchain[:, 0:default_sn_spl_id], labels=labels[:default_sn_spl_id], show_titles=True)
-    star_fig.suptitle(object, fontsize=20)
+    star_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_stellar_corner.%s"%(format))
     star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
     ### 3. corner for nuisance parameters:
     nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True)
-    nuisance_fig.suptitle(object, fontsize=20)
+    nuisance_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_nuisance_corner.%s"%(format))
     nuisance_fig.savefig(nuisance_corner_figure_path, format=format, dpi=dpi)
@@ -126,7 +168,7 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
 # ----
 
 
-def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000):
+def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000, emucov=True):
     ''' store star_MarleyMod.py parameters into HDF5 files, including:
         - observed wavelength
         - observed flux
@@ -163,7 +205,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
         print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"
               %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
-    star_model = SampleThetaPhi(debug=True)
+    star_model = SampleThetaPhi(debug=True, emucov=emucov)
     star_model.initialize((spectrum_id, order_key))
     bestfit_theta = ThetaParam(grid=star_pars[0:3],
                                vz=star_pars[3],
@@ -278,7 +320,7 @@ def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
         resid_spec_min = y_scalar * np.min([ 0, np.nanmin(resid_fls[id_xrange]), np.nanmin(noise_3s_low[id_xrange]) ])
         resid_spec_max = y_scalar * np.max([ np.nanmax(resid_fls[id_xrange]), np.nanmax(noise_3s_upp[id_xrange]) ])
         ### 3. comparison
-        figure, axes = plt.subplots(nrows=2, figsize=(10, 8), sharex=True)
+        figure, axes = plt.subplots(nrows=2, figsize=(10, 10), sharex=True)
         # observation vs. model
         axes[0].plot(obs_wls, obs_fls, color='k', linestyle='-', linewidth=2, zorder=1, label='data')
         axes[0].plot(obs_wls, mod_fls, color='r', linestyle='-', linewidth=2, zorder=2, label='model')
@@ -297,9 +339,9 @@ def comp_star_spec(object, resdir, resfile, format='png', dpi=None):
         axes[1].set_xlim(obs_wls[0], obs_wls[-1])
         axes[1].set_ylim(resid_spec_min, resid_spec_max)
         # title
-        figure.suptitle(object, fontsize=20)
+        figure.suptitle(show_object_str(object), fontsize=20)
         # save
-        figure.subplots_adjust()
+        figure.tight_layout(rect=[0, 0.03, 1, 0.8])
         compspec_figure_path = os.path.expandvars(resdir + "%s_spec.%s"%(object, format))
         figure.savefig(compspec_figure_path, format=format, dpi=dpi)
         print("spectra comparison finished!")
@@ -343,7 +385,7 @@ else:
         plot_star_corner(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format, dpi=args.dpi)
     ## 3. store results
     if args.store:
-        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd)
+        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd, emucov=args.emucov)
     ## 4. compare spectra
     if args.spec:
         comp_star_spec(object, resdir, resfile, format=args.format, dpi=args.dpi)

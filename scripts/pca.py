@@ -9,6 +9,7 @@
 # ZJ Zhang (Jul 21st, 2017)   [ADD --- "corner" module in "args.plot == "emcee""]
 # ZJ Zhang (Feb 23th, 2018)   [REVISE --- replace the burn-in phase by adding a user-defined burn-in fraction "f_burnin"; the "resume" keyword will concatenate the output chains automatically]
 # ZJ Zhang (Dec 15th, 2018)   [REVISE --- let the "args.plot == "chain":" part automatcially extract the number of grid parameters]
+# ZJ Zhang (Apr 22nd, 2019)   (enable the "pca.py --plot=emulator --params=emcee --f_burnin=xx" with another option of plotting the "distribution" instead of the the random draws of eigenspectra weights)
 #
 #################################################
 
@@ -29,7 +30,7 @@ from Starfish import emulator
 from Starfish.grid_tools import HDF5Interface
 from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator
 from Starfish.covariance import Sigma
-
+from Starfish.utils import sigma_envelope
 
 import argparse
 parser = argparse.ArgumentParser(description="Create and manipulate a PCA decomposition of the synthetic spectral library.")
@@ -48,7 +49,8 @@ parser.add_argument("--samples", type=int, default=100, help="Number of samples 
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--params", choices=["fmin", "emcee"], help="Which optimized parameters to use.")
 
-parser.add_argument("--check", action="store_true", help="Check the emulator training results by comparing the true grid models with the model spectra on the model grids points using the trained spectral emulator.")
+parser.add_argument("--w_distribution", action="store_true", help="plot the distribution of eigenspectra weights instead of the random draws.")
+
 parser.add_argument("--store", action="store_true", help="Store the optimized emulator parameters to the HDF5 file. Use with the --params=fmin or --params=emcee to choose.")
 args = parser.parse_args()
 
@@ -414,9 +416,11 @@ if args.plot == "emulator":
             blocks.append(np.vstack(par_list).T)
 
 
-    # Now, this function takes a parameter block and plots all of the eigenspectra.
-    npoints = 40 # How many points to include across the active dimension
-    ndraw = 8 # How many draws from the emulator to use
+    ### Now, this function takes a parameter block and plots all of the eigenspectra.
+    # How many points to include across the active dimension
+    npoints = 40
+    # How many draws from the emulator to use
+    ndraw = 100 if args.w_distribution else 8
 
     def plot_block(block):
         # block specifies the parameter grid points
@@ -461,19 +465,34 @@ if args.plot == "emulator":
             x0 = block[:, active_dim] # x-axis
             # Weight values at grid points
             y0 = ww[:, eig_i]
-            ax.plot(x0, y0, "bo")
+            ax.plot(x0, y0, "ko", zorder=5)
 
             x1 = fgrid[:, active_dim]
-            for i in range(ndraw):
-                y1 = weight_draws[i][:, eig_i]
-                ax.plot(x1, y1)
+
+            if args.w_distribution:
+                # draw median and 1/2/3-sigma envelopes of the weights
+                eig_i_weight = np.array(weight_draws)[:,:,eig_i]  # shape: (ndraw, npoints)
+                median_weight = np.mean(eig_i_weight, axis=0)
+                noise_1s_low, noise_1s_upp = sigma_envelope(eig_i_weight, num_sigma=1)
+                noise_2s_low, noise_2s_upp = sigma_envelope(eig_i_weight, num_sigma=2)
+                noise_3s_low, noise_3s_upp = sigma_envelope(eig_i_weight, num_sigma=3)
+                # plot the scatters
+                ax.plot(x1, median_weight, color='blue', linestyle='-', linewidth=2, zorder=4)
+                ax.fill_between(x1, median_weight + noise_1s_low, median_weight + noise_1s_upp, zorder=3, color='dodgerblue', alpha=0.6)
+                ax.fill_between(x1, median_weight + noise_2s_low, median_weight + noise_2s_upp, zorder=2, color='#63B8FF', alpha=0.8)
+                ax.fill_between(x1, median_weight + noise_3s_low, median_weight + noise_3s_upp, zorder=1, color='#B0E2FF', alpha=0.5)
+            else:
+                for i in range(ndraw):
+                    y1 = weight_draws[i][:, eig_i]
+                    ax.plot(x1, y1, zorder=4)
 
             ax.set_ylabel(r"$w_{:}$".format(eig_i))
             ax.set_xlabel(Starfish.parname[active_dim])
 
             fstring = "w{:}".format(eig_i) + Starfish.parname[active_dim] + "".join(["{:.1f}".format(ub) for ub in ublock[0, :]])
+            str_w_distribution = "_wdist" if args.w_distribution else ""
 
-            fig.savefig(emulator_plotdir + fstring + ".png")
+            fig.savefig(emulator_plotdir + fstring + str_w_distribution + ".png")
 
             plt.close('all')
 

@@ -278,6 +278,96 @@ class MarleyM0GridInterface(RawGridInterface):
 
 
 
+class MarleyMp0d5pre190306GridInterface(RawGridInterface):
+    ''' The Marley18 model with super-solar metallicity of M=+0.5 (positive 0.5 => p0d5)
+        
+        <RECEIVED BEFORE 190306>
+        '''
+    def __init__(self, air=False, norm=False, wl_range=[4000, 50000], base=os.path.expandvars(Starfish.grid["raw_path"])):
+        ## basic information of model grids
+        super().__init__(name="MarleyMp0d5pre190306",
+                         param_names=["temp", "logg"],
+                         points=[np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
+                                 np.array([3.5, 4.0, 4.5, 5.0, 5.5])],
+                         air=air,
+                         wl_range=wl_range,
+                         base=base)
+        # norm to decide if normalized to 1 solar luminosity (boolean)
+        self.norm = norm  # deprecated by Gully
+        # dictionary of translating the model parameter (first for Teff and second for log-g)
+        self.par_dicts = [None,
+                          {3.5:"31",4.0:"100",4.5:"316",5.0:"1000",5.5:"3160"}]
+
+        ## load an arbitrary model file to obtain the wavelength grid
+        try:
+            base = os.path.expandvars(self.base)
+            wl_file = pd.read_csv(self.base + '/sp_t1000g1000nc_m+0.5', names=['wavelength', 'flux'], skiprows=2, delim_whitespace=True)  # the skiprows=2 should be used for M+0.5 models
+        except OSError:
+            raise C.GridError("Wavelength file improperly specified.")
+        # obtain wavelength
+        wl_full_micron = wl_file.wavelength[::-1].values * u.micron
+        wl_full_Angstrom = wl_full_micron.to(u.Angstrom)
+        # if air is true, convert the normally vacuum file to air wls.
+        if self.air:
+            self.wl_full = vacuum_to_air(wl_full_Angstrom.value)
+        else:
+            self.wl_full = wl_full_Angstrom.value
+
+        ## select wavelength range of interest
+        self.ind = (self.wl_full >= self.wl_range[0]) & (self.wl_full <= self.wl_range[1])
+        self.wl = self.wl_full[self.ind]
+        self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m+0.5"
+
+    def load_flux(self, parameters, norm=True):
+        '''
+        Load just the flux and header information.
+
+        :param parameters: stellar parameters
+        :type parameters: np.array
+
+        :raises C.GridError: if the file cannot be found on disk.
+
+        :returns: tuple (flux_array, header_dict)
+        '''
+        ## identify the model spectrum based on the chosen parameters
+        # check if parameters are well-defined by the user
+        self.check_params(parameters)
+        # retrieve parameter strings
+        str_parameters = []
+        for param, par_dict in zip(parameters, self.par_dicts):
+            if par_dict is None:
+                str_parameters.append(param)
+            else:
+                str_parameters.append(par_dict[param])
+        # model file name
+        fname = self.rname.format(*str_parameters)
+
+        ## load model spectrum
+        try:
+            model_file = pd.read_csv(fname, names=['wavelength', 'flux'], skiprows=2, delim_whitespace=True)  # the skiprows=2 should be used for M+0.5 models
+            flux_nu = model_file.flux[::-1].values
+        except OSError:
+            raise C.GridError("{} is not on disk.".format(fname))
+                                                                
+        ## obtain wavelength and flux
+        wl_full_Angstrom = (model_file.wavelength[::-1].values * u.micron).to(u.Angstrom)
+        flux_lambda = (flux_nu * u.erg/u.s/u.cm**2/u.Hz).to(u.erg/u.s/u.cm**2/u.Angstrom, equivalencies=u.spectral_density(wl_full_Angstrom))
+        # check if the normalized spectra are needed, i.e., convert erg/s/cm2/A => erg/s/cm2/A/steradian
+        if self.norm:
+            f = flux_lambda.value / np.pi # convert to erg/cm^2/s/A/steradian
+        else:
+            f = flux_lambda.value
+                                                                                        
+        #Add temp, logg, norm to the metadata
+        header = {}
+        header["norm"] = self.norm
+        header["air"] = self.air
+                                                                                                    
+        return (f[self.ind], header)
+# ----
+
+
+
 class MarleyMp0d5GridInterface(RawGridInterface):
     ''' The Marley18 model with super-solar metallicity of M=+0.5 (positive 0.5 => p0d5)
         '''

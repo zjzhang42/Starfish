@@ -9,7 +9,7 @@
 # ZJ Zhang (Dec 02nd, 2018) (add the "glob_Covmat" parameter in the final resfile via "store_star_MarleyMod")
 # ZJ Zhang (Mar 14th, 2019) (turn on the spectral emulator matrix into the entire covariance matrix)
 # ZJ Zhang (Apr 02nd, 2019) (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
-# ZJ Zhang (Apr 07th, 2019) (allow the program to show long object names in pieces)
+# ZJ Zhang (Apr 07th, 2019) (allow the program to show long object names in pieces using the "show_object_str" function)
 #
 #################################################
 
