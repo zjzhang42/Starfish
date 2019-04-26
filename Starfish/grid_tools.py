@@ -1379,8 +1379,8 @@ class HDF5Creator:
         print("\nNow process grid models with unused parameters...\nTotal of {} files to process.".format(len(unused_param_list)))
         for unused_param in all_unused_params:
             fl, header = self.process_flux(unused_param)
-                if fl is None:
-                    continue
+            if fl is None:
+                continue
             # The PHOENIX spectra are stored as float32, and so we do the same here.
             flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), dtype="f", compression='gzip', compression_opts=9)
             flux[:] = fl
