@@ -1148,14 +1148,17 @@ class HDF5Creator:
 
 
         ## take only those unused_points of the GridInterface that fall within the ranges specified
-        self.unused_points = []
-        for unused_subgroup in self.GridInterface.unused_points:
-            unused_points = []
-            for i,(low, high) in enumerate(ranges):
-                valid_unused_points = unused_subgroup[i]
-                ind = (valid_unused_points >= low) & (valid_unused_points <= high)
+        if self.GridInterface.unused_points is None:
+            self.unused_points is None
+        else:
+            self.unused_points = []
+            for unused_subgroup in self.GridInterface.unused_points:
+                unused_points = []
+                for i,(low, high) in enumerate(ranges):
+                    valid_unused_points = unused_subgroup[i]
+                    ind = (valid_unused_points >= low) & (valid_unused_points <= high)
                 unused_points.append(valid_unused_points[ind])
-            self.unused_points += [unused_points]
+                self.unused_points += [unused_points]
 
 
         # the raw wl from the spectral library
@@ -1366,28 +1369,29 @@ class HDF5Creator:
 
 
         ### now repeat the above procedures for the unused grid points
-        unused_param_list = []
-        # extract all unused points
-        for unused_subgroup in self.unused_points:
-            for i in itertools.product(*unused_subgroup):
-                unused_param_list.append(np.array(i))
-        all_unused_params = np.array(unused_param_list)
-        # save all unsued parameters
-        unused_par_dset = self.hdf5.create_dataset("unused_pars", all_unused_params.shape, dtype="f8", compression='gzip', compression_opts=9)
-        unused_par_dset[:] = all_unused_params
-        # process model grids with unused parameters
-        print("\nNow process grid models with unused parameters...\nTotal of {} files to process.".format(len(unused_param_list)))
-        for unused_param in all_unused_params:
-            fl, header = self.process_flux(unused_param)
-            if fl is None:
-                continue
-            # The PHOENIX spectra are stored as float32, and so we do the same here.
-            flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), dtype="f", compression='gzip', compression_opts=9)
-            flux[:] = fl
-            # Store header keywords as attributes in HDF5 file
-            for key,value in header.items():
-                if key != "" and value != "": #check for empty FITS kws
-                    flux.attrs[key] = value
+        if self.unused_points is not None:
+            unused_param_list = []
+            # extract all unused points
+            for unused_subgroup in self.unused_points:
+                for i in itertools.product(*unused_subgroup):
+                    unused_param_list.append(np.array(i))
+            all_unused_params = np.array(unused_param_list)
+            # save all unsued parameters
+            unused_par_dset = self.hdf5.create_dataset("unused_pars", all_unused_params.shape, dtype="f8", compression='gzip', compression_opts=9)
+            unused_par_dset[:] = all_unused_params
+            # process model grids with unused parameters
+            print("\nNow process grid models with unused parameters...\nTotal of {} files to process.".format(len(unused_param_list)))
+            for unused_param in all_unused_params:
+                fl, header = self.process_flux(unused_param)
+                if fl is None:
+                    continue
+                # The PHOENIX spectra are stored as float32, and so we do the same here.
+                flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), dtype="f", compression='gzip', compression_opts=9)
+                flux[:] = fl
+                # Store header keywords as attributes in HDF5 file
+                for key,value in header.items():
+                    if key != "" and value != "": #check for empty FITS kws
+                        flux.attrs[key] = value
 
         self.hdf5.close()
 
