@@ -15,6 +15,9 @@
 # ZJ Zhang (Mar 07th, 2019)   (ADD --- "MarleygridMn0d5M0Mp0d5GridInterface")
 # ZJ Zhang (Mar 29th, 2019)   (MODIFY --- class "SPEX_PRZ(Instrument)" to "SPEX_PRZp0d5(Instrument)")
 # ZJ Zhang (Apr 07th, 2019)   (change the function name from "MarleyGridInterface" to "MarleyM0GridInterface")
+# ZJ Zhang (Apr 26th, 2019)   (add "unused_points" into "RawGridInterface" to specify the grid points that are NOT used to define the spectral emulator)
+# ZJ Zhang (Apr 26th, 2019)   (add "unused_points" into "MarleygridMn0d5M0Mp0d5GridInterface" to specify the grid points that are NOT used to define the spectral emulator)
+# ZJ Zhang (Apr 26th, 2019)   (incorporate "unused_points" into "HDF5Creator" to generate processed grid spectra that are NOT used to define the spectral emulator)
 #
 #################################################
 
@@ -145,9 +148,11 @@ class RawGridInterface:
     :type wl_range: list of len 2 [min, max]
     :param base: path to the root of the files on disk.
     :type base: string
+    :param unused_points: the grid points that are NOT used to define the spectral emulator
+    :type unused_points: list of numpy arrays
 
     '''
-    def __init__(self, name, param_names, points, air=True, wl_range=[3000,13000], base=None):
+    def __init__(self, name, param_names, points, air=True, wl_range=[3000,13000], base=None, unused_points=None):
         self.name = name
 
         self.param_names = param_names
@@ -156,6 +161,9 @@ class RawGridInterface:
         self.air = air
         self.wl_range = wl_range
         self.base = os.path.expandvars(base)
+
+        # specify the grid points that are NOT used to define the spectral emulator
+        self.unused_points = unused_points
 
     def check_params(self, parameters):
         '''
@@ -675,12 +683,21 @@ class MarleygridMn0d5M0Mp0d5GridInterface(RawGridInterface):
                                  np.array([-0.5, 0, 0.5])],
                          air=air,
                          wl_range=wl_range,
-                         base=base)
+                         base=base,
+                         unused_points=[ [np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
+                                          np.array([3.0, 5.25]),
+                                          np.array([-0.5])],
+                                        [np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
+                                         np.array([3.75, 4.25, 4.75, 5.25]),
+                                         np.array([0])],
+                                        [np.array([200, 225, 250, 275, 300, 325, 350, 375, 400, 425, 450, 475, 500, 525, 550, 575, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100, 2200, 2300, 2400]),
+                                         np.array([3.0, 3.75, 4.25, 4.75]),
+                                         np.array([0.5])] ])
         # norm to decide if normalized to 1 solar luminosity (boolean)
         self.norm = norm  # deprecated by Gully
         # dictionary of translating the model parameter (first for Teff, second for log-g, and third for Z)
         self.par_dicts = [None,
-                          {3.25:"17",3.5:"31",4.0:"100",4.5:"316",5.0:"1000",5.5:"3160"},
+                          {3.0: "10",3.25:"17",3.5:"31",3.75:"56",4.0:"100",4.25:"178",4.5:"316",4.75:"562",5.0:"1000",5.25:"1780",5.5:"3160"},
                           None]
 
         ## load an arbitrary model file to obtain the wavelength grid
@@ -1123,11 +1140,23 @@ class HDF5Creator:
 
         # We know which subset we want, so use these.
         for i,(low, high) in enumerate(ranges):
-            valid_points  = self.GridInterface.points[i]
+            valid_points = self.GridInterface.points[i]
             ind = (valid_points >= low) & (valid_points <= high)
             self.points.append(valid_points[ind])
         if vsinis is not None:
             self.points.append(vsinis)
+
+
+        ## take only those unused_points of the GridInterface that fall within the ranges specified
+        self.unused_points = []
+        for unused_subgroup in self.GridInterface.unused_points:
+            unused_points = []
+            for i,(low, high) in enumerate(ranges):
+                valid_unused_points = unused_subgroup[i]
+                ind = (valid_unused_points >= low) & (valid_unused_points <= high)
+                unused_points.append(valid_unused_points[ind])
+            self.unused_points += [unused_points]
+
 
         # the raw wl from the spectral library
         self.wl_native = self.GridInterface.wl #raw grid
@@ -1330,6 +1359,31 @@ class HDF5Creator:
                 compression_opts=9)
             flux[:] = fl
 
+            # Store header keywords as attributes in HDF5 file
+            for key,value in header.items():
+                if key != "" and value != "": #check for empty FITS kws
+                    flux.attrs[key] = value
+
+
+        ### now repeat the above procedures for the unused grid points
+        unused_param_list = []
+        # extract all unused points
+        for unused_subgroup in self.unused_points:
+            for i in itertools.product(*unused_subgroup):
+                unused_param_list.append(np.array(i))
+        all_unused_params = np.array(unused_param_list)
+        # save all unsued parameters
+        unused_par_dset = self.hdf5.create_dataset("unused_pars", all_unused_params.shape, dtype="f8", compression='gzip', compression_opts=9)
+        unused_par_dset[:] = all_unused_params
+        # process model grids with unused parameters
+        print("\nNow process grid models with unused parameters...\nTotal of {} files to process.".format(len(unused_param_list)))
+        for unused_param in all_unused_params:
+            fl, header = self.process_flux(unused_param)
+                if fl is None:
+                    continue
+            # The PHOENIX spectra are stored as float32, and so we do the same here.
+            flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), dtype="f", compression='gzip', compression_opts=9)
+            flux[:] = fl
             # Store header keywords as attributes in HDF5 file
             for key,value in header.items():
                 if key != "" and value != "": #check for empty FITS kws
