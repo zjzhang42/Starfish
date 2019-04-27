@@ -721,7 +721,7 @@ class MarleygridMn0d5M0Mp0d5GridInterface(RawGridInterface):
         self.wl = self.wl_full[self.ind]
         self.rname = self.base + "{0:}/sp_t{1:0>.0f}g{2:}nc_m{3:{4}.1f}"
 
-    def load_flux(self, parameters, norm=True):
+    def load_flux(self, parameters, norm=True, enable_unused=False):
         '''
             Load just the flux and header information.
 
@@ -734,7 +734,8 @@ class MarleygridMn0d5M0Mp0d5GridInterface(RawGridInterface):
             '''
         ## identify the model spectrum based on the chosen parameters
         # check if parameters are well-defined by the user
-        self.check_params(parameters)
+        if enable_unused==False:
+            self.check_params(parameters)
         # retrieve parameter strings
         str_parameters = []
         for param, par_dict in zip(parameters, self.par_dicts):
@@ -1235,13 +1236,15 @@ class HDF5Creator:
         wl_dset.attrs["dv"] = self.dv_final
 
 
-    def process_flux(self, parameters):
+    def process_flux(self, parameters, enable_unused=False):
         '''
         Take a flux file from the raw grid, process it according to the
         instrument, and insert it into the HDF5 file.
 
         :param parameters: the model parameters.
         :type parameters: 1D np.array
+        :param enable_unused: do we also process the model spectra that are on the unused grid points?
+        :type enable_unused: boolean
 
         .. note::
 
@@ -1264,7 +1267,7 @@ class HDF5Creator:
             vsini = 0.0
 
         try:
-            flux, header = self.GridInterface.load_flux(parameters)
+            flux, header = self.GridInterface.load_flux(parameters, enable_unused=enable_unused)
 
             # Interpolate the native spectrum to a log-lam FFT grid
             interp = InterpolatedUnivariateSpline(self.wl_native, flux, k=5)
@@ -1382,7 +1385,7 @@ class HDF5Creator:
             # process model grids with unused parameters
             print("\nNow process grid models with unused parameters...\nTotal of {} files to process.".format(len(unused_param_list)))
             for unused_param in all_unused_params:
-                fl, header = self.process_flux(unused_param)
+                fl, header = self.process_flux(unused_param, enable_unused=True)
                 if fl is None:
                     continue
                 # The PHOENIX spectra are stored as float32, and so we do the same here.
