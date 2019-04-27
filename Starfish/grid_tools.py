@@ -1149,7 +1149,7 @@ class HDF5Creator:
 
         ## take only those unused_points of the GridInterface that fall within the ranges specified
         if self.GridInterface.unused_points is None:
-            self.unused_points is None
+            self.unused_points = None
         else:
             self.unused_points = []
             for unused_subgroup in self.GridInterface.unused_points:
@@ -1157,7 +1157,7 @@ class HDF5Creator:
                 for i,(low, high) in enumerate(ranges):
                     valid_unused_points = unused_subgroup[i]
                     ind = (valid_unused_points >= low) & (valid_unused_points <= high)
-                unused_points.append(valid_unused_points[ind])
+                    unused_points.append(valid_unused_points[ind])
                 self.unused_points += [unused_points]
 
 
