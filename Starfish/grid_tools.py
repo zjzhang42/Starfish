@@ -18,6 +18,7 @@
 # ZJ Zhang (Apr 26th, 2019)   (add "unused_points" into "RawGridInterface" to specify the grid points that are NOT used to define the spectral emulator)
 # ZJ Zhang (Apr 26th, 2019)   (add "unused_points" into "MarleygridMn0d5M0Mp0d5GridInterface" to specify the grid points that are NOT used to define the spectral emulator)
 # ZJ Zhang (Apr 26th, 2019)   (incorporate "unused_points" into "HDF5Creator" to generate processed grid spectra that are NOT used to define the spectral emulator)
+# ZJ Zhang (Apr 28th, 2019)   (incorporate the "self.unused_grid_points" variable, the "load_unused_flux" and "unused_fluxes" functions into "HDF5Interface" to access the processed grid spectra that are NOT used to define the spectral emulator)
 #
 #################################################
 
@@ -1171,6 +1172,11 @@ class HDF5Creator:
         self.hdf5.flux_group = self.hdf5.create_group("flux")
         self.hdf5.flux_group.attrs["unit"] = "erg/cm^2/s/A"
 
+        if self.GridInterface.unused_points is not None:
+            self.hdf5.unusedflux_group = self.hdf5.create_group("unused_flux")
+            self.hdf5.unusedflux_group.attrs["unit"] = "erg/cm^2/s/A"
+
+
         # We'll need a few wavelength grids
         # 1. The original synthetic grid: ``self.wl_native``
         # 2. A finely spaced log-lambda grid respecting the ``dv`` of
@@ -1389,7 +1395,7 @@ class HDF5Creator:
                 if fl is None:
                     continue
                 # The PHOENIX spectra are stored as float32, and so we do the same here.
-                flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), dtype="f", compression='gzip', compression_opts=9)
+                flux = self.hdf5["unused_flux"].create_dataset(self.key_name.format(*unused_param), shape=(len(fl),), dtype="f", compression='gzip', compression_opts=9)
                 flux[:] = fl
                 # Store header keywords as attributes in HDF5 file
                 for key,value in header.items():
@@ -1425,6 +1431,7 @@ class HDF5Interface:
             self.wl_header = dict(hdf5["wl"].attrs.items())
             self.dv = self.wl_header["dv"]
             self.grid_points = hdf5["pars"][:]
+            self.unused_grid_points = hdf5["unused_pars"][:] if ("unused_pars" in hdf5.keys()) else None
 
         #determine the bounding regions of the grid by sorting the grid_points
         low = np.min(self.grid_points, axis=0)
@@ -1460,6 +1467,33 @@ class HDF5Interface:
 
         return fl
 
+    def load_unused_flux(self, parameters):
+        '''
+            Load the flux from the unused grid points, with possibly an index truncation.
+
+            :param parameters: the stellar parameters
+            :type parameters: np.array
+
+            :raises KeyError: if spectrum is not found in the HDF5 file.
+
+            :returns: flux array
+            '''
+
+        key = self.key_name.format(*parameters)
+        with h5py.File(self.filename, "r") as hdf5:
+            try:
+                if self.ind is not None:
+                    fl = hdf5['unused_flux'][key][self.ind[0]:self.ind[1]]
+                else:
+                    fl = hdf5['unused_flux'][key][:]
+            except KeyError as e:
+                raise C.GridError(e)
+
+        #Note: will raise a KeyError if the file is not found.
+        
+        return fl
+
+
     @property
     def fluxes(self):
         '''
@@ -1469,6 +1503,18 @@ class HDF5Interface:
         '''
         for grid_point in self.grid_points:
             yield self.load_flux(grid_point)
+
+
+    @property
+    def unused_fluxes(self):
+        '''
+            Iterator to loop over all of the spectra stored in the grid, for PCA.
+
+            Loops over parameters in the order specified by unused_grid_points.
+            '''
+        for unused_grid_point in self.unused_grid_points:
+            yield self.load_unused_flux(unused_grid_point)
+
 
     def load_flux_hdr(self, parameters):
         '''
