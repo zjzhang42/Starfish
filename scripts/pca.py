@@ -13,6 +13,8 @@
 # ZJ Zhang (Apr 23rd, 2019)   (revise the line colors by `pca.py --plot=reconstruct`)
 # ZJ Zhang (Apr 23rd, 2019)   (revise the figure names and add legend and adjust plotting axis range in `pca.py --plot=reconstruct`)
 # ZJ Zhang (Apr 24th, 2019)   (enable a new plot option of "--plot=pca_vs_gp" to compare the PCA reconstructed and GP reconstructed model spectra)
+# ZJ Zhang (Apr 25th, 2019)   (add a new option of "--recon_item" with choices of choices of "pca" and "gp" to allow the users, when using "--plot=reconstruct", to compare the original models [which define the spectral emulator] with the PCA/GP reconstructed models)
+# ZJ Zhang (Apr 28th, 2019)   (add a new choice "unused" for "--recon_item", to allow the users, when using "--plot=reconstruct", to compare the original models [which do NOT define the spectral emulator] with the GP reconstructed models)
 #
 #################################################
 
@@ -44,7 +46,7 @@ parser.add_argument("--create", action="store_true", help="Create a PCA decompos
 
 parser.add_argument("--plot", choices=["reconstruct", "eigenspectra", "priors", "emcee",
                                        "emulator", "chain", "pca_vs_gp"], help="reconstruct: plot the original synthetic spectra vs. the PCA/GP reconstructed spectra (options specified by --recon_item).\n priors: plot the chosen priors on the parameters.\n emcee: plot the triangle diagram for the result of the emcee optimization.\n emulator: plot weight interpolations.\n chain: plot the chain values as a function of sampling steps.\n pca_vs_gp: plot the PCA reconstructed spectra vs. GP reconstructed spectra (the latter has the weights GP uncertainties incorporated).")
-parser.add_argument("--recon_item", choices=["pca", "gp"], help="(This is used when --plot is set to 'reconstruct') pca: compare the PCA recosntructed spectra")
+parser.add_argument("--recon_item", choices=["pca", "gp", "unused"], help="(This is used when --plot is set to 'reconstruct') pca: compare the original models (which define the spectral emulator) vs. PCA recosntructed models.\n gp: compare the original models (which define the spectral emulator) vs. GP reconstructed models.\n unused: compare the original models (which do NOT define the spectral emulator) vs. GP reconstructed models.")
 
 parser.add_argument("--f_burnin", type=float, default=0.5, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
 
@@ -231,9 +233,111 @@ if args.plot == "reconstruct":
             fig.tight_layout()
             fig.savefig(emulator_plotdir + "GP_" + name + "_models_vs_reconGP.png")
             plt.close("all")
-        ### 4.4 execute plotting function
+        ## 4.4 execute plotting function
         p = mp.Pool(mp.cpu_count())
         p.map(plot_models_vs_gp, data)
+
+    ### 5. unused original model spectra vs. GP reconstructed spectra
+    if args.recon_item=="unused":
+        ## 5.1 preparation
+        flux_mean = my_pca.flux_mean
+        flux_std = my_pca.flux_std
+        eigenspectra = my_pca.eigenspectra
+        ## 5.2 load emulator
+        # 5.2.1 emulator parameters
+        if args.params == "fmin":
+            eparams = np.load(emulator_outdir+"eparams_fmin.npy")
+        elif args.params == "emcee":
+            # load chains
+            chain = np.load(emulator_outdir+"eparams_emcee.npy")
+            # remove the burn-in phase
+            nwalkers, nsamples, ndim = chain.shape
+            if (args.f_burnin is not None) and (0 <= args.f_burnin < 1):
+                burned_chain = chain[:, int(nsamples * args.f_burnin):, :]
+            else:
+                print("warning: f_burnin should be in [0, 1) - using the entire chain...")
+                burned_chain = chain
+            flatchain = burned_chain.reshape((-1, ndim))
+            # final parameters
+            eparams = np.median(flatchain, axis=0)
+            print("Using emcee median")
+        else:
+            import sys
+            sys.exit()
+        # 5.2.2 obtain GP parameters
+        lambda_xi = eparams[0]
+        hparams = eparams[1:].reshape((my_pca.m, -1))
+        # 5.2.3 load emulator
+        emulator = Emulator(my_pca, eparams)
+        ## 5.3 load unused grid points and fluxes
+        # 5.3.1 unused grid points
+        unused_grid_points = my_HDF5.unused_grid_points
+        # 5.3.2 load unused original model spectra
+        unused_fluxes = np.empty((len(unused_grid_points), my_pca.npix))
+        for i, spec in enumerate(my_HDF5.unused_fluxes):
+            unused_fluxes[i,:] = spec
+        ## 5.4 zip everything
+        data = zip(unused_grid_points, unused_fluxes)
+        ## 5.5 plotting function
+        ndraw = 100
+        def plot_unused_models_vs_gp(data):
+            # 5.5.1 load each grid point and the corresponding PCA reconstructed spectra
+            par, real = data
+            # 5.5.2 update the emulator to the current grid point
+            emulator.params = par
+            # 5.5.3 draw random weights
+            weight_draws = []
+            for i in range(ndraw):
+                weight_draws.append(emulator.draw_weights())
+            # 5.5.4 construct random spectra
+            gp_recon_draws = (flux_mean + flux_std * np.array(weight_draws).dot(eigenspectra)) * emulator.absolute_flux
+            # 5.5.5 mean and 1/2/3-sigma of the GP reconstructed spectra
+            gp_recon = np.mean(gp_recon_draws, axis=0)
+            noise_1s_low, noise_1s_upp = sigma_envelope(gp_recon_draws, num_sigma=1)
+            noise_2s_low, noise_2s_upp = sigma_envelope(gp_recon_draws, num_sigma=2)
+            noise_3s_low, noise_3s_upp = sigma_envelope(gp_recon_draws, num_sigma=3)
+            # 5.5.6 adjust the noise spectra since the GP drawn spectra are SUBTRACTED from the PCA reconstructed spectra
+            adj_noise_1s_low, adj_noise_1s_upp = -noise_1s_upp, -noise_1s_low
+            adj_noise_2s_low, adj_noise_2s_upp = -noise_2s_upp, -noise_2s_low
+            adj_noise_3s_low, adj_noise_3s_upp = -noise_3s_upp, -noise_3s_low
+            # 5.5.7 plot
+            # original models vs. GP reconstructed models
+            fig, ax = plt.subplots(nrows=3, figsize=(10, 14))
+            ax[0].plot(my_pca.wl, real, 'k-', linewidth=3, zorder=1, label='unused original models')
+            ax[0].plot(my_pca.wl, gp_recon, 'b-', linewidth=3, zorder=2, label='GP reconstructed models')
+            ax[0].set_ylabel(r"$f_\lambda$")
+            ax[0].legend(loc='upper right')
+            ax[0].set_xlim(my_pca.wl[0]-Starfish.grid["buffer"], my_pca.wl[-1]+Starfish.grid["buffer"])
+
+            # original - GP residuals vs. scatters
+            ax[1].plot(my_pca.wl, real - gp_recon, 'k-', zorder=4, linewidth=3, label=u'unused original \u2212 GP')
+            ax[1].fill_between(my_pca.wl, adj_noise_1s_low, adj_noise_1s_upp, zorder=3, color='dodgerblue', alpha=0.6)
+            ax[1].fill_between(my_pca.wl, adj_noise_2s_low, adj_noise_2s_upp, zorder=2, color='#63B8FF', alpha=0.8)
+            ax[1].fill_between(my_pca.wl, adj_noise_3s_low, adj_noise_3s_upp, zorder=1, color='#B0E2FF', alpha=0.5)
+            ax[1].set_xlabel(r"$\lambda$ [AA]")
+            ax[1].set_ylabel(r"residual $f_\lambda$")
+            ax[1].legend(loc='upper right')
+            ax[1].set_xlim(my_pca.wl[0]-Starfish.grid["buffer"], my_pca.wl[-1]+Starfish.grid["buffer"])
+
+            id_wlnorm = np.where(real > 1.0e-3)
+            max_normresid = np.max(100*abs(real[id_wlnorm] - gp_recon[id_wlnorm])/real[id_wlnorm])
+            ax[2].plot(my_pca.wl[id_wlnorm], 100*(real[id_wlnorm] - gp_recon[id_wlnorm])/real[id_wlnorm], 'k-', zorder=3, linewidth=3, label=u'normalized residual (residual / unused original models)')
+            scaled_refspec = real[id_wlnorm] * (max_normresid/np.max(real[id_wlnorm]/1.2))
+            ax[2].fill_between(my_pca.wl[id_wlnorm], -scaled_refspec, scaled_refspec, zorder=1, color='grey', alpha=0.3)
+            ax[2].set_xlabel(r"$\lambda$ [AA]")
+            ax[2].set_ylabel(r"normalized residual $f_\lambda$ [%]")
+            ax[2].legend(loc='upper right')
+            ax[2].set_xlim(my_pca.wl[0]-Starfish.grid["buffer"], my_pca.wl[-1]+Starfish.grid["buffer"])
+
+            fmt = "=".join(["{:.2f}" for i in range(len(Starfish.parname))])
+            name = fmt.format(*[p for p in par])
+            ax[0].set_title("unused_"+name+"_averes_%.3f_stdres_%.3f_%.3f%%"%(np.mean(real - gp_recon), np.std(real - gp_recon), max_normresid))
+            fig.tight_layout()
+            fig.savefig(emulator_plotdir + "unused_GP_" + name + "_models_vs_reconGP.png")
+            plt.close("all")
+        ## 5.6 execute plotting function
+        p = mp.Pool(mp.cpu_count())
+        p.map(plot_unused_models_vs_gp, data)
 
 
 if args.plot == "eigenspectra":
