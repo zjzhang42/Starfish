@@ -58,7 +58,7 @@ fix_c0 = True
 ## 1. Initial parameter settings
 ''' initial parameters
 
-    grid [Teff, logg]
+    grid [Teff, logg, Z]
     vz
     vsini
     logOmega
