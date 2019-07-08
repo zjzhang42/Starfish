@@ -19,6 +19,8 @@
 # ZJ Zhang (Apr 26th, 2019)   (add "unused_points" into "MarleygridMn0d5M0Mp0d5GridInterface" to specify the grid points that are NOT used to define the spectral emulator)
 # ZJ Zhang (Apr 26th, 2019)   (incorporate "unused_points" into "HDF5Creator" to generate processed grid spectra that are NOT used to define the spectral emulator)
 # ZJ Zhang (Apr 28th, 2019)   (incorporate the "self.unused_grid_points" variable, the "load_unused_flux" and "unused_fluxes" functions into "HDF5Interface" to access the processed grid spectra that are NOT used to define the spectral emulator)
+# ZJ Zhang (May 17th, 2019)   (add class "SPEX_PRZp0d8(Instrument)")
+# ZJ Zhang (May 28th, 2019)   (add the dummy "unused_points" into "MarleyM0GridInterface" to specify the grid points that are NOT used to define the spectral emulator)
 #
 #################################################
 
@@ -209,7 +211,8 @@ class MarleyM0GridInterface(RawGridInterface):
                                  np.arange(3.25, 5.51, 0.25)],
                          air=air,
                          wl_range=wl_range,
-                         base=base)
+                         base=base,
+                         unused_points=None)
         # norm to decide if normalized to 1 solar luminosity (boolean)
         self.norm = norm  # deprecated by Gully
         # dictionary of translating the model parameter (first for Teff and second for log-g)
@@ -236,7 +239,7 @@ class MarleyM0GridInterface(RawGridInterface):
         self.wl = self.wl_full[self.ind]
         self.rname = self.base + "sp_t{0:0>.0f}g{1:}nc_m0.0"
 
-    def load_flux(self, parameters, norm=True):
+    def load_flux(self, parameters, norm=True, enable_unused=False):
         '''
             Load just the flux and header information.
 
@@ -250,7 +253,8 @@ class MarleyM0GridInterface(RawGridInterface):
             '''
         ## identify the model spectrum based on the chosen parameters
         # check if parameters are well-defined by the user
-        self.check_params(parameters)
+        if enable_unused==False:
+            self.check_params(parameters)
         # retrieve parameter strings
         str_parameters = []
         for param, par_dict in zip(parameters, self.par_dicts):
@@ -1788,6 +1792,21 @@ class SPEX_PRZp0d5(Instrument):
         f_out = interp1d(lambda_A, R_lambda, fill_value="extrapolate", bounds_error=False)
         return f_out
 
+class SPEX_PRZp0d8(Instrument):
+    '''SPEX Instrument PRZ mode with the 0.8" slit '''
+    # FWHM = 1715 is R~175, the max value for 0.8" slit (simply scaled from the 0.5" slit)
+    def __init__(self, name="SPEX_PRZp0d8", FWHM=1715., wl_range=(6500, 27000)):
+        super().__init__(name=name, FWHM=FWHM, wl_range=wl_range)
+        self.air = False
+
+    def res_gradient(self):
+        '''Returns a R(lambda) function for SpeX Prism_mode'''
+        filename = os.path.expandvars('$Starfish/data/res_gradient/IRTF_SpeX_PRZ_03.csv')
+        res_dat = pd.read_csv(filename)
+        R_lambda = res_dat.res.values * (0.3/0.8)  # load resolution values and scale them to a 0.8" slit
+        lambda_A = (res_dat.wavelength_um.values * u.um).to(u.Angstrom).value
+        f_out = interp1d(lambda_A, R_lambda, fill_value="extrapolate", bounds_error=False)
+        return f_out
 
 class IGRINS_H(Instrument):
     '''IGRINS H band instrument'''

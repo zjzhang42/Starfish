@@ -413,6 +413,9 @@ if args.optimize:
         for i in range(0, len(Starfish.parname)):
             lnpriors += np.sum(Glnprior(hparams[:, i+1], *priors[i]))
 
+        # prior on lambda_xi - make it close to a peak around 0.35
+        #lnpriors += Glnprior(lambda_xi, *[1, 0.5])
+
         h2params = hparams**2
         #Fold hparams into the new shape
         Sig_w = Sigma(my_pca.gparams, h2params)

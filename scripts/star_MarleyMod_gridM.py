@@ -7,6 +7,7 @@
 #
 # ZJ Zhang (Dec 15th, 2018)
 # ZJ Zhang (Apr. 08th, 2019)   (UPDATE --- add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (May 17th, 2919)   (equip the script with options of "globcov/sigmacov/loccov" to decide whether to include the global/sigma/local covariance matrix)
 #
 #################################################
 
@@ -38,6 +39,9 @@ parser.add_argument("--samples", type=int, default=5, help="How many samples to 
 parser.add_argument("--incremental_save", type=int, default=100, help="How often to save incremental progress of MCMC samples.")
 parser.add_argument("--resume", action="store_true", help="Continue from the last sample. If this is left off, the chain will start from your initial guess specified in config.yaml.")
 parser.add_argument("--emucov", action="store_true", help="Include the spectral emulator covariance matrix in the fitting process (default: False)")
+parser.add_argument("--globcov", action="store_true", help="Include the global covariance matrix in the fitting process (default: False)")
+parser.add_argument("--sigmacov", action="store_true", help="Include the measurement uncertainty covariance matrix in the fitting process (default: False)")
+parser.add_argument("--loccov", action="store_true", help="Include the local covariance matrix in the fitting process (default: False)")
 args = parser.parse_args()
 
 
@@ -104,7 +108,7 @@ phi_par.save()
 
 
 # 2. Run the program.
-model = SampleThetaPhi(debug=True, emucov=args.emucov)
+model = SampleThetaPhi(debug=True, emucov=args.emucov, globcov=args.globcov, sigmacov=args.sigmacov, loccov=args.loccov)
 model.initialize((spectrum_id, order_key))
 
 

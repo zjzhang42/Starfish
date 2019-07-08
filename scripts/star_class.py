@@ -5,9 +5,10 @@
 #
 # Modification History:
 #
-# ZJ Zhang (Apr. 24th, 2018)
-# ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
-# ZJ Zhang (Apr. 02nd, 2019)   (UPDATE --- add the boolean keyword "emucov" to the class "Order" to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (Apr 24th, 2018)
+# ZJ Zhang (Mar 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
+# ZJ Zhang (Apr 02nd, 2019)   (UPDATE --- add the boolean keyword "emucov" to the class "Order" to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (May 17th, 2919)   (equip the script with options of "globcov/sigmacov/loccov" to decide whether to include the global/sigma/local covariance matrix)
 #
 #################################################
 
@@ -68,7 +69,7 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(name)s -  %(message)
     Starfish.routdir), level=logging.DEBUG, filemode="w", datefmt='%m/%d/%Y %I:%M:%S %p')
 
 class Order:
-    def __init__(self, debug=False, emucov=True):
+    def __init__(self, debug=False, emucov=True, globcov=True, sigmacov=True, loccov=True):
         '''
         This object contains all of the variables necessary for the partial
         lnprob calculation for one echelle order. It is designed to first be
@@ -81,9 +82,19 @@ class Order:
         self.lnprob_last = -np.inf
 
         self.debug = debug
+
         self.emucov = emucov
         if self.emucov:
             print("spectral emulator covariance matrix being incorporated...")
+        self.globcov = globcov
+        if self.globcov:
+            print("global covariance matrix being incorporated...")
+        self.sigmacov = sigmacov
+        if self.sigmacov:
+            print("measurement uncertainty covariance matrix being incorporated...")
+        self.loccov = loccov
+        if self.loccov:
+            print("local covariance matrix being incorporated...")
 
     def initialize(self, key):
         '''
@@ -149,7 +160,7 @@ class Order:
         self.flux_std = np.empty((self.ndata,))
         self.flux_scalar = None
 
-        self.sigma_mat = self.sigma**2 * np.eye(self.ndata)
+        self.sigma_mat = self.sigma**2 * np.eye(self.ndata) if self.sigmacov else np.zeros((self.ndata, self.ndata))
         self.mus, self.C_GP, self.data_mat = None, None, None
         self.Omega = None
 
@@ -172,6 +183,7 @@ class Order:
         X = (self.chebyshevSpectrum.k * self.flux_std * np.eye(self.ndata)).dot(self.eigenspectra.T)
 
         part1 = X.dot(self.C_GP.dot(X.T))
+        part1 = part1 + 1.0e-12 * ((self.Omega*self.flux_scalar))**2 * np.eye(*part1.shape)
         part2 = self.data_mat
         CC = part1 + part2 if self.emucov else part2
 
@@ -243,6 +255,7 @@ class Order:
         mod_fls = (self.chebyshevSpectrum.k * self.flux_mean + X.dot(self.mus))
         # covariance matrix
         part1 = X.dot(self.C_GP.dot(X.T))
+        part1 = part1 + 1.0e-12 * ((self.Omega*self.flux_scalar))**2 * np.eye(*part1.shape)
         part2 = self.data_mat
         CC = part1 + part2 if self.emucov else part2
         part1 = part1 if self.emucov else np.nan * part1
@@ -398,17 +411,24 @@ class SampleThetaPhi(Order):
         # Read off the Chebyshev parameters and update
         self.chebyshevSpectrum.update(p.cheb)
 
-        # Check to make sure the global covariance parameters make sense
-        #if p.sigAmp < 0.1:
-        #   raise C.ModelError("sigAmp shouldn't be lower than 0.1, something is wrong.")
+        # copy the sigAmp and then apply the value based on sigmacov
+        copied_sigAmp = p.sigAmp if self.sigmacov else 0.0
+        # decide whether to compute the global covariance matrix based on the globcov
+        if self.globcov:
+            # Check to make sure the global covariance parameters make sense
+            #if p.sigAmp < 0.1:
+            #   raise C.ModelError("sigAmp shouldn't be lower than 0.1, something is wrong.")
 
-        max_r = 6.0 * p.l # [km/s]
+            max_r = 6.0 * p.l # [km/s]
 
-        # Create a partial function which returns the proper element.
-        k_func = make_k_func(p)
+            # Create a partial function which returns the proper element.
+            k_func = make_k_func(p)
 
-        # Store the previous data matrix in case we want to revert later
-        self.data_mat_last = self.data_mat
-        self.data_mat = get_dense_C(self.wl, k_func=k_func, max_r=max_r) + p.sigAmp*self.sigma_mat
+            # Store the previous data matrix in case we want to revert later
+            self.data_mat_last = self.data_mat
+            self.data_mat = get_dense_C(self.wl, k_func=k_func, max_r=max_r) + copied_sigAmp*self.sigma_mat
+        else:
+            self.data_mat_last = self.data_mat
+            self.data_mat = copied_sigAmp*self.sigma_mat
 # ----
 

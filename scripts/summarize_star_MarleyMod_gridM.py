@@ -9,6 +9,7 @@
 # ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
 # ZJ Zhang (Apr 08th, 2019) (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
 # ZJ Zhang (Apr 08th, 2019) (allow the program to show long object names in pieces)
+# ZJ Zhang (May 17th, 2919)   (equip the script with options of "globcov/sigmacov/loccov" to decide whether to include the global/sigma/local covariance matrix)
 #
 # adapted from "summarize_star_MarleyMod.py" but can now fit a metallicity grid
 #################################################
@@ -37,6 +38,9 @@ import argparse
 parser = argparse.ArgumentParser(prog="summarize_star_MarleyMod_gridM.py", description="summarize the fitting results from star_MarleyMod.py, including observed spectra (wls + fls), best-fit parameters with uncertainties, best-fit model flux, and covariance matrix.")
 parser.add_argument("--mode", type=str, default='std', help="mode of running this program, including the standard mode ('std') and user-input mode ('usr'); under the 'usr' mode, the input chain files and output files are defined by the user")
 parser.add_argument("--emucov", action="store_true", help="Include the spectral emulator covariance matrix in the fitting process (default: False)")
+parser.add_argument("--globcov", action="store_true", help="Include the global covariance matrix in the fitting process (default: False)")
+parser.add_argument("--sigmacov", action="store_true", help="Include the measurement uncertainty covariance matrix in the fitting process (default: False)")
+parser.add_argument("--loccov", action="store_true", help="Include the local covariance matrix in the fitting process (default: False)")
 parser.add_argument("--f_burnin", type=float, default=0.5, help="burn-in fraction of the emcee chains.")
 parser.add_argument("--chain", action="store_true", help="plot the chain values as a function of sampling steps.")
 parser.add_argument("--corner", action="store_true", help="plot the corner plots for the chains with the given f_burnin.")
@@ -168,7 +172,7 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
 # ----
 
 
-def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000, emucov=True):
+def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, num_noisedraw=1000, emucov=True, globcov=True, sigmacov=True, loccov=True):
     ''' store star_MarleyMod.py parameters into HDF5 files, including:
         - observed wavelength
         - observed flux
@@ -205,7 +209,7 @@ def store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=0.5, nu
         print("%-10s: %10.2f (+ %5.2f) (- %5.2f)"
               %(print_labels[item_index], star_pars[item_index],star_pars_upp_err[item_index], star_pars_low_err[item_index]))
     ### 2. obtain best-fit model flux and covariance matrix
-    star_model = SampleThetaPhi(debug=True, emucov=emucov)
+    star_model = SampleThetaPhi(debug=True, emucov=emucov, globcov=globcov, sigmacov=sigmacov, loccov=loccov)
     star_model.initialize((spectrum_id, order_key))
     bestfit_theta = ThetaParam(grid=star_pars[0:3],
                                vz=star_pars[3],
@@ -385,7 +389,7 @@ else:
         plot_star_corner(object, chain_file, plotdir, f_burnin=args.f_burnin, format=args.format, dpi=args.dpi)
     ## 3. store results
     if args.store:
-        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd, emucov=args.emucov)
+        store_star_MarleyMod(object, chain_file, resfile, specfile, f_burnin=args.f_burnin, num_noisedraw=args.num_nd, emucov=args.emucov, globcov=args.globcov, sigmacov=args.sigmacov, loccov=args.loccov)
     ## 4. compare spectra
     if args.spec:
         comp_star_spec(object, resdir, resfile, format=args.format, dpi=args.dpi)
