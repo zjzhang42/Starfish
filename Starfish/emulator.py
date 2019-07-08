@@ -1,3 +1,10 @@
+## Author: I. Czekala
+#
+# Modification History:
+#
+# ZJ Zhang (Jul 08th, 2019)   (add a new function "calc_lambda_xi_bprime_loss_term" to compute the recommended prior b_prime for the hyper-parameter lambda_xi)
+# ZJ Zhang (Jul 08th, 2019)   (add the "Normprior" and "Normlnprior" functions to compute the probability density distribution of the normal distribution)
+
 import numpy as np
 import h5py
 from sklearn.decomposition import PCA
@@ -68,6 +75,35 @@ def Gprior(x, s, r):
 
 def Glnprior(x, s, r):
     return s * np.log(r) + (s - 1.) * np.log(x) - r*x - math.lgamma(s)
+
+def Normprior(x, mu, std):
+    return 1.0 / np.sqrt(2 * np.pi * std**2) * np.exp(- (x - mu)**2 / (2 * std**2))
+
+def Normlnprior(x, mu, std):
+    return -0.5 * np.log(2 * np.pi) - np.log(std) - (x - mu)**2 / (2 * std**2)
+
+def calc_lambda_xi_bprime_loss_term(eigenspectra, fluxes, M, npix, m):
+    ''' this is to compute the information-loss term for the b_prime value shown in the recommended prior on the hyper-parameter lambda_xi of the spectral emulator
+
+        compute 0.5 * F^T (I - Phi (Phi^T Phi)^-1 Phi^T) F, which describes the information loss from PCA
+        - this term can be re-written as: 0.5 * F^T (F - Phi w_hat)
+        
+        added by ZJ Zhang
+        '''
+    ### 1. compute w_hat
+    w_hat = get_w_hat(eigenspectra, fluxes, M)
+    ### 2. compute Phi w_hat
+    Phi_w_hat = np.empty((M * npix,1))
+    for i in range(M):
+        loss_per_M = np.zeros(npix)
+        for j in range(m):
+            loss_per_M += eigenspectra[j] * w_hat[i + j * M]
+    Phi_w_hat[i*npix:(i+1)*npix] = loss_per_M.reshape(npix,-1)
+    ### 3. compute F^T (F - Phi w_hat)
+    half_FT_times_F_sub_Phi_w_hat = 0.5 * fluxes.reshape(M * npix).dot(fluxes.reshape(M * npix,-1) - Phi_w_hat)
+    return half_FT_times_F_sub_Phi_w_hat
+# ----
+
 
 class PCAGrid:
     '''

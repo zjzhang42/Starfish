@@ -15,6 +15,7 @@
 # ZJ Zhang (Apr 24th, 2019)   (enable a new plot option of "--plot=pca_vs_gp" to compare the PCA reconstructed and GP reconstructed model spectra)
 # ZJ Zhang (Apr 25th, 2019)   (add a new option of "--recon_item" with choices of choices of "pca" and "gp" to allow the users, when using "--plot=reconstruct", to compare the original models [which define the spectral emulator] with the PCA/GP reconstructed models)
 # ZJ Zhang (Apr 28th, 2019)   (add a new choice "unused" for "--recon_item", to allow the users, when using "--plot=reconstruct", to compare the original models [which do NOT define the spectral emulator] with the GP reconstructed models)
+# ZJ Zhang (Jul 08th, 2019)   (add an option "args.recommended_lambda_xi" to allow pca.py to compute and use the recommended prior for the hyper-parameter lambda_xi, when training the spectral emulator)
 #
 #################################################
 
@@ -36,7 +37,7 @@ import itertools
 import Starfish
 from Starfish import emulator
 from Starfish.grid_tools import HDF5Interface
-from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator
+from Starfish.emulator import PCAGrid, Gprior, Glnprior, Emulator, calc_lambda_xi_bprime_loss_term, Normprior, Normlnprior
 from Starfish.covariance import Sigma
 from Starfish.utils import sigma_envelope
 
@@ -49,6 +50,8 @@ parser.add_argument("--plot", choices=["reconstruct", "eigenspectra", "priors", 
 parser.add_argument("--recon_item", choices=["pca", "gp", "unused"], help="(This is used when --plot is set to 'reconstruct') pca: compare the original models (which define the spectral emulator) vs. PCA recosntructed models.\n gp: compare the original models (which define the spectral emulator) vs. GP reconstructed models.\n unused: compare the original models (which do NOT define the spectral emulator) vs. GP reconstructed models.")
 
 parser.add_argument("--f_burnin", type=float, default=0.5, help="The fraction of the entire emcee output chain that need to be removed before parameter inferences.")
+
+parser.add_argument("--recommended_lambda_xi", action="store_true", help="Compute and use the recommended prior for the lambda_xi parameter, when training the spectral emulator (currently only applied to  --optimize=emcee).")
 
 parser.add_argument("--optimize", choices=["fmin", "emcee"], help="Optimize the emulator using either a downhill simplex algorithm or the emcee ensemble sampler algorithm.")
 
@@ -382,11 +385,113 @@ if args.plot == "priors":
         plt.savefig(pca_plotdir + "prior_" + par + ".png")
         plt.close("all")
 
+
+priors_lambda_xi = [None, None]  # initialize the prior parameters for lambda_xi
+prior_lambda_xi_normal = False   # True if using a normal distribution for the lambda_xi prior, False if using the Gamma distribution
+if args.recommended_lambda_xi:
+    ''' compute and adopt the recommended prior for the hyper-parameter lambda_xi of the spectral emulator
+
+        Based on Czekala+2015, the appropriate prior on the hyper-parameter lambda_xi should be a Gamma function
+
+        Gamma (a', b')
+
+        where
+            a' = a + M (N_pix - m) / 2
+            a  = 1.0 (recommeneded)
+            b' = b + 0.5 * F^T (I - Phi (Phi^T Phi)^-1 Phi^T) F
+            b  = 0.0001 (recommended)
+
+        Here we compute the suggested Gamma(a',b') for the spectral emulator
+
+        Finally, we return the recommended a' and b'
+        '''
+    print("computing the recommended prior on lambda_xi for you...")
+    ### 1. load the HDF5 interface
+    myHDF5 = HDF5Interface()
+    ## 1.1 load fundamental parameters
+    M = len(myHDF5.grid_points)
+    npix = len(myHDF5.wl)
+    ## 1.2 load model spectra
+    fluxes = np.empty((M, npix))
+    z = 0
+    for i, spec in enumerate(myHDF5.fluxes):
+        fluxes[z,:] = spec
+        z += 1
+    flux_scalars = np.average(fluxes, axis=1)
+    fluxes = fluxes/flux_scalars[np.newaxis].T
+    flux_mean = np.average(fluxes, axis=0)
+    fluxes -= flux_mean
+    flux_std = np.std(fluxes, axis=0)
+    fluxes /= flux_std
+    ## 1.3 load eigenspectra
+    my_pca = PCAGrid.open()
+    eigenspectra = my_pca.eigenspectra
+    m = my_pca.m
+    ### 2. compute the recommended priors for lambda_xi
+    ## 2.1 recommended values for a_lambda, b_lambda (Czekala+2015, Eqn 34)
+    a_lambda = 1.0
+    b_lambda = 0.0001
+    ## 2.2 a_lambda_prime
+    a_lambda_prime = a_lambda + 0.5 * M * (npix - m)
+    ## 2.3 b_lambda_prime
+    loss_term = calc_lambda_xi_bprime_loss_term(eigenspectra, fluxes, M, npix, m)
+    b_lambda_prime = b_lambda + loss_term
+    ## 2.4 print the suggested prior
+    print("recommended a_lambda_prime:  %f"%(a_lambda_prime))
+    print("recommended b_lambda_prime:  %f"%(b_lambda_prime))
+    ### 3. check if the a_lambda_prime is too large for practically computing the Gamma distribution
+    if a_lambda_prime > 170.:
+        print("- the recommended a_lambda_prime is too large for the Gamma distribution - now approximate it by a normal distribution...")
+        prior_lambda_xi_normal = True
+    ### 4. plot the recommended prior for lambda_xi
+    if prior_lambda_xi_normal==False:
+        x = np.linspace(0.01, 2 * mu)
+        fig, ax = plt.subplots(nrows=1, figsize=(6,6))
+        prob = Gprior(x, a_lambda_prime, b_lambda_prime)
+        plt.plot(x, prob)
+        plt.xlabel("lambda_xi")
+        plt.ylabel("Probability")
+        ylim_max = ax.get_ylim()[1]
+        plt.text(1.0, ylim_max*0.9, "GAMMA DISTRIBUTION")
+        plt.text(1.0, ylim_max*0.8, "a_prime = %.3f"%(a_lambda_prime))
+        plt.text(1.0, ylim_max*0.7, "b_prime = %.3f"%(b_lambda_prime))
+        plt.savefig(pca_plotdir + "recommended_prior_lambda_xi.png")
+        plt.close("all")
+        ### 5. return the updated prior for lambda_xi
+        priors_lambda_xi = [a_lambda_prime, b_lambda_prime]
+    else:
+        mu = 1.0 * a_lambda_prime / b_lambda_prime
+        std = 1.0 * np.sqrt(a_lambda_prime) / b_lambda_prime
+        print("recommended mu:  %f"%(mu))
+        print("recommended std:  %f"%(std))
+        x = np.linspace(mu-5*std, mu+5 * std)
+        fig, ax = plt.subplots(nrows=1, figsize=(6,6))
+        prob = Normprior(x, mu, std)
+        plt.plot(x, prob)
+        plt.xlabel("lambda_xi")
+        plt.ylabel("Probability")
+        ylim_max = ax.get_ylim()[1]
+        plt.text(1.0, ylim_max*0.9, "NORMAL DISTRIBUTION")
+        plt.text(1.0, ylim_max*0.8, "mu = %.3f"%(mu))
+        plt.text(1.0, ylim_max*0.7, "std = %.3f"%(std))
+        plt.savefig(pca_plotdir + "recommended_prior_lambda_xi.png")
+        plt.close("all")
+        ### 5. return the updated prior for lambda_xi
+        priors_lambda_xi = [mu, std]
+# ----
+
+
 # If we're doing optimization, period, set up some variables and the lnprob
 if args.optimize:
     my_pca = emulator.PCAGrid.open()
     PhiPhi = np.linalg.inv(emulator.skinny_kron(my_pca.eigenspectra, my_pca.M))
     priors = Starfish.PCA["priors"]
+
+    if prior_lambda_xi_normal==False:
+        function_str = "G"
+    else:
+        function_str = "Norm"
+    print("... priors of lambda_xi: %s[%f, %f]"%(function_str, priors_lambda_xi[0], priors_lambda_xi[1]))
 
     def lnprob(p, fmin=False):
         '''
@@ -413,8 +518,9 @@ if args.optimize:
         for i in range(0, len(Starfish.parname)):
             lnpriors += np.sum(Glnprior(hparams[:, i+1], *priors[i]))
 
-        # prior on lambda_xi - make it close to a peak around 0.35
-        #lnpriors += Glnprior(lambda_xi, *[1, 0.5])
+        # prior on lambda_xi
+        if (priors_lambda_xi[0] is not None) and (priors_lambda_xi[1] is not None):
+            lnpriors += eval(function_str + "lnprior")(lambda_xi, *priors_lambda_xi)
 
         h2params = hparams**2
         #Fold hparams into the new shape
@@ -474,7 +580,15 @@ if args.optimize == "emcee":
         # p0 is a (nwalkers, ndim) array
         amp = [10.0, 150]
 
-        p0.append(np.random.uniform(0.01, 1.0, nwalkers))
+        # initialize lambda_xi based on random draws from priors
+        if (priors_lambda_xi[0] is None) or (priors_lambda_xi[1] is None):
+            p0.append(np.random.uniform(0.01, 1.0, nwalkers))
+        else:
+            if prior_lambda_xi_normal:
+                p0.append(np.random.normal(priors_lambda_xi[0], priors_lambda_xi[1], nwalkers))
+            else:
+                p0.append(np.random.gamma(priors_lambda_xi[0], 1./priors_lambda_xi[1], nwalkers))
+
         for i in range(my_pca.m):
             p0 +=   [np.random.uniform(amp[0], amp[1], nwalkers)]
             for s,r in priors:
