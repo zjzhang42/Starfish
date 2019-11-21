@@ -6,10 +6,11 @@
 # Modification History:
 #
 # ZJ Zhang (Dec 17th, 2018)
-# ZJ Zhang (Mar. 14th, 2019)   (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
-# ZJ Zhang (Apr 08th, 2019) (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
-# ZJ Zhang (Apr 08th, 2019) (allow the program to show long object names in pieces)
-# ZJ Zhang (May 17th, 2919)   (equip the script with options of "globcov/sigmacov/loccov" to decide whether to include the global/sigma/local covariance matrix)
+# ZJ Zhang (Mar. 14th, 2019)  (UPDATE --- turn on the spectral emulator matrix into the entire covariance matrix)
+# ZJ Zhang (Apr 08th, 2019)   (add the boolean argument "emucov" to invoke the "SampleThetaPhi" class to say if the spectral emulator covariance matrix should be turned on or turned off)
+# ZJ Zhang (Apr 08th, 2019)   (allow the program to show long object names in pieces)
+# ZJ Zhang (May 17th, 2019)   (equip the script with options of "globcov/sigmacov/loccov" to decide whether to include the global/sigma/local covariance matrix)
+# ZJ Zhang (Nov 21st, 2019)   (adjust levels in corner plots)
 #
 # adapted from "summarize_star_MarleyMod.py" but can now fit a metallicity grid
 #################################################
@@ -157,13 +158,13 @@ def plot_star_corner(object, chain_file, plotdir, f_burnin=0.5, format='png', dp
     ### 1. obtain burned-in flat chain
     flatchain = burnin_flat(np.load(chain_file), f_burnin=f_burnin)
     ### 2. corner for stellar parameters
-    star_fig = corner.corner(flatchain[:, 0:default_sn_spl_id], labels=labels[:default_sn_spl_id], show_titles=True)
+    star_fig = corner.corner(flatchain[:, 0:default_sn_spl_id], labels=labels[:default_sn_spl_id], show_titles=True, levels=(1-np.exp(-0.5),1-np.exp(-2),1-np.exp(-4.5)))
     star_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     star_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_stellar_corner.%s"%(format))
     star_fig.savefig(star_corner_figure_path, format=format, dpi=dpi)
     ### 3. corner for nuisance parameters:
-    nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True)
+    nuisance_fig = corner.corner(flatchain[:, default_sn_spl_id:], labels=labels[default_sn_spl_id:], show_titles=True, levels=(1-np.exp(-0.5),1-np.exp(-2),1-np.exp(-4.5)))
     nuisance_fig.suptitle(show_object_str(object), fontsize=20)
     # save plot
     nuisance_corner_figure_path = os.path.expandvars(plotdir + "star_inference/star_nuisance_corner.%s"%(format))
